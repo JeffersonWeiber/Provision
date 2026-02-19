@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MOCK_ORGANIZATIONS } from '../../../data/mocks';
-import { Search, Building2, MapPin, MoreVertical, Plus, FileText, Globe, Mail, Users, History, Settings } from 'lucide-react';
+import { Search, Building2, MapPin, MoreVertical, Plus, FileText, Globe, Mail, Settings } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import Drawer from '../../../components/ui/Drawer';
 
@@ -9,6 +9,9 @@ const OrganizationsList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrg, setSelectedOrg] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'geral' | 'membros' | 'historico' | 'config'>('geral');
+    const [orgs, setOrgs] = useState<any[]>(MOCK_ORGANIZATIONS);
 
     // Form State
     const [newOrg, setNewOrg] = useState({
@@ -20,7 +23,7 @@ const OrganizationsList = () => {
         contact_email: ''
     });
 
-    const filteredOrgs = MOCK_ORGANIZATIONS.filter((org: any) => {
+    const filteredOrgs = orgs.filter((org: any) => {
         return org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             org.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
             org.cnpj.includes(searchTerm);
@@ -28,7 +31,13 @@ const OrganizationsList = () => {
 
     const handleCreateOrg = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Criando organização:', newOrg);
+        const org = {
+            ...newOrg,
+            id: orgs.length + 1,
+            status: 'Ativo',
+            contacts: 0
+        };
+        setOrgs([org, ...orgs]);
         alert('Organização criada com sucesso! (Simulação)');
         setIsModalOpen(false);
         setNewOrg({
@@ -41,8 +50,25 @@ const OrganizationsList = () => {
         });
     };
 
+    const handleUpdateOrg = (e: React.FormEvent) => {
+        e.preventDefault();
+        const updatedOrgs = orgs.map(o => o.id === selectedOrg.id ? { ...selectedOrg } : o);
+        setOrgs(updatedOrgs);
+        alert('Dados atualizados com sucesso! (Simulação)');
+        setIsEditModalOpen(false);
+    };
+
+    const handleToggleOrgStatus = () => {
+        const newStatus = selectedOrg.status === 'Ativo' ? 'Inativo' : 'Ativo';
+        const updatedOrgs = orgs.map(o => o.id === selectedOrg.id ? { ...o, status: newStatus } : o);
+        setOrgs(updatedOrgs);
+        setSelectedOrg({ ...selectedOrg, status: newStatus });
+        alert(`Organização ${newStatus === 'Ativo' ? 'ativada' : 'desativada'} com sucesso!`);
+    };
+
     const openOrgDetails = (org: any) => {
         setSelectedOrg(org);
+        setActiveTab('geral');
         setIsDrawerOpen(true);
     };
 
@@ -235,7 +261,7 @@ const OrganizationsList = () => {
                 title="Detalhes da Organização"
             >
                 {selectedOrg && (
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {/* Header Profile */}
                         <div className="flex items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <div className="h-16 w-16 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500 shadow-inner">
@@ -250,70 +276,282 @@ const OrganizationsList = () => {
                             </div>
                         </div>
 
-                        {/* Localização */}
-                        <div className="p-4 bg-brand-50 rounded-xl border border-brand-100 flex items-start">
-                            <MapPin size={20} className="text-brand-600 mr-3 mt-1" />
-                            <div>
-                                <h6 className="text-sm font-bold text-brand-900">Localização</h6>
-                                <p className="text-sm text-brand-800">{selectedOrg.city} - {selectedOrg.state}</p>
-                            </div>
+                        {/* Tabs Navigation */}
+                        <div className="flex border-b border-slate-200">
+                            <button
+                                onClick={() => setActiveTab('geral')}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === 'geral' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Geral
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('membros')}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === 'membros' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Membros
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('historico')}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === 'historico' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Histórico
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('config')}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === 'config' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Config
+                            </button>
                         </div>
 
-                        {/* Tabs / Sections */}
-                        <div className="space-y-6">
-                            <div>
-                                <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Administração</h5>
-                                <div className="grid grid-cols-1 gap-2">
-                                    <button className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
-                                        <span className="flex items-center"><Users size={18} className="mr-2 text-brand-600" /> Contatos Vinculados</span>
-                                        <span className="bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-600">{selectedOrg.contacts}</span>
-                                    </button>
-                                    <button className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
-                                        <span className="flex items-center"><History size={18} className="mr-2 text-brand-600" /> Histórico de Contratos</span>
-                                        <span className="text-xs text-slate-400">Ver todos</span>
-                                    </button>
-                                    <button className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
-                                        <span className="flex items-center"><Settings size={18} className="mr-2 text-brand-600" /> Configurações Gerais</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Membros Recentes</h5>
-                                <div className="space-y-3">
-                                    {[1, 2].map((i) => (
-                                        <div key={i} className="flex items-center p-3 rounded-lg bg-slate-50 border border-slate-100">
-                                            <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 text-xs font-bold">
-                                                {i === 1 ? 'J' : 'M'}
-                                            </div>
-                                            <div className="ml-3 flex-1">
-                                                <p className="text-sm font-medium text-slate-900">{i === 1 ? 'João Silva' : 'Maria Souza'}</p>
-                                                <p className="text-xs text-slate-500">{i === 1 ? 'Secretário' : 'Assessora'}</p>
-                                            </div>
-                                            <button className="text-slate-400 hover:text-brand-600">
-                                                <MoreVertical size={16} />
-                                            </button>
+                        {/* Tab Content */}
+                        <div className="space-y-6 pt-2">
+                            {activeTab === 'geral' && (
+                                <div className="space-y-6">
+                                    <div className="p-4 bg-brand-50 rounded-xl border border-brand-100 flex items-start">
+                                        <MapPin size={20} className="text-brand-600 mr-3 mt-1" />
+                                        <div>
+                                            <h6 className="text-sm font-bold text-brand-900">Localização Principal</h6>
+                                            <p className="text-sm text-brand-800 font-medium">{selectedOrg.city} - {selectedOrg.state}</p>
                                         </div>
-                                    ))}
-                                    <button className="w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-sm hover:border-brand-300 hover:text-brand-500 transition-all flex items-center justify-center">
-                                        <Plus size={16} className="mr-1" /> Vincular Novo Contato
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                                    </div>
 
-                        {/* Footer Actions */}
-                        <div className="pt-8 border-t border-slate-100 flex gap-3">
-                            <button className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors">
-                                Editar Dados
-                            </button>
-                            <button className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors">
-                                Desativar
-                            </button>
+                                    <div className="space-y-4">
+                                        <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Informações de Contato</h5>
+                                        <div className="p-4 rounded-xl border border-slate-100 bg-white space-y-3">
+                                            <div className="flex items-center text-sm">
+                                                <Mail size={16} className="text-slate-400 mr-3" />
+                                                <span className="text-slate-600 font-medium">Email:</span>
+                                                <span className="ml-auto text-slate-900 font-bold">{selectedOrg.contact_email || 'contato@' + selectedOrg.name.toLowerCase().split(' ').join('') + '.gov.br'}</span>
+                                            </div>
+                                            <div className="flex items-center text-sm">
+                                                <Globe size={16} className="text-slate-400 mr-3" />
+                                                <span className="text-slate-600 font-medium">Website:</span>
+                                                <span className="ml-auto text-brand-600 underline text-xs">www.{selectedOrg.name.toLowerCase().split(' ').join('')}.gov.br</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-100 flex gap-3">
+                                        <button
+                                            onClick={() => setIsEditModalOpen(true)}
+                                            className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors"
+                                        >
+                                            Editar Dados
+                                        </button>
+                                        <button
+                                            onClick={handleToggleOrgStatus}
+                                            className={`px-4 py-2 border rounded-lg text-sm font-bold transition-colors ${selectedOrg.status === 'Ativo'
+                                                ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                                : 'border-green-200 text-green-600 hover:bg-green-50'
+                                                }`}
+                                        >
+                                            {selectedOrg.status === 'Ativo' ? 'Desativar' : 'Ativar'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'membros' && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Membros da Organização</h5>
+                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600">{selectedOrg.contacts} Total</span>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} className="flex items-center p-3 rounded-lg bg-white border border-slate-100 hover:border-brand-200 transition-colors cursor-pointer group">
+                                                <div className="h-9 w-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 text-xs font-bold">
+                                                    {i === 1 ? 'JS' : i === 2 ? 'MS' : 'RC'}
+                                                </div>
+                                                <div className="ml-3 flex-1">
+                                                    <p className="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+                                                        {i === 1 ? 'João Silva' : i === 2 ? 'Maria Souza' : 'Ricardo Costa'}
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-500">{i === 1 ? 'Procurador' : i === 2 ? 'Prefeita' : 'Contador'}</p>
+                                                </div>
+                                                <button className="text-slate-400 hover:text-slate-600">
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button className="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm font-bold hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50/30 transition-all flex items-center justify-center">
+                                            <Plus size={18} className="mr-2" /> Vincular Novo Contato
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'historico' && (
+                                <div className="space-y-4">
+                                    <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Histórico de Contratos & Atividades</h5>
+                                    <div className="space-y-4 py-2 border-l-2 border-slate-100 ml-2 pl-6">
+                                        <div className="relative">
+                                            <div className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-green-500 ring-4 ring-white"></div>
+                                            <p className="text-sm font-bold text-slate-900">Contrato de Consultoria Ativo</p>
+                                            <p className="text-xs text-slate-500 mt-1">Vigência: FEV/2026 - JAN/2027</p>
+                                            <div className="mt-2 text-[11px] bg-slate-50 p-2 rounded border border-slate-100 text-slate-600">
+                                                Acompanhamento de Restos a Pagar e LRF.
+                                            </div>
+                                        </div>
+                                        <div className="relative">
+                                            <div className="absolute -left-[31px] top-1 h-3 h-3 h-3 w-3 rounded-full bg-slate-300 ring-4 ring-white"></div>
+                                            <p className="text-sm font-bold text-slate-600">Revisão de PPA Finalizada</p>
+                                            <p className="text-xs text-slate-400 mt-1">Concluído em 15/12/2025</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'config' && (
+                                <div className="space-y-6">
+                                    <div className="space-y-4">
+                                        <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Preferências de Exibição</h5>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800">Visível no Portfólio</p>
+                                                    <p className="text-[11px] text-slate-500">Exibir marca na Home Pública</p>
+                                                </div>
+                                                <div className="w-10 h-5 bg-brand-600 rounded-full relative cursor-pointer shadow-inner">
+                                                    <div className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800">Alertas de Vencimento</p>
+                                                    <p className="text-[11px] text-slate-500">Notificar proximidade do fim do contrato</p>
+                                                </div>
+                                                <div className="w-10 h-5 bg-brand-600 rounded-full relative cursor-pointer shadow-inner">
+                                                    <div className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                                        <h6 className="text-sm font-bold text-red-900 mb-1 flex items-center">
+                                            <Settings size={16} className="mr-2" /> Zona de Risco
+                                        </h6>
+                                        <p className="text-xs text-red-700 mb-3">Ações que podem afetar permanentemente o acesso aos dados desta organização.</p>
+                                        <button className="w-full py-2 bg-white text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-600 hover:text-white transition-all">
+                                            Excluir Organização permanentemente
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
             </Drawer>
+            {/* Edit Organization Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="Editar Organização"
+            >
+                {selectedOrg && (
+                    <form onSubmit={handleUpdateOrg} className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
+                                <Building2 size={14} /> Nome da Organização
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={selectedOrg.name}
+                                onChange={(e) => setSelectedOrg({ ...selectedOrg, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
+                                    <FileText size={14} /> CNPJ
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                    value={selectedOrg.cnpj}
+                                    onChange={(e) => setSelectedOrg({ ...selectedOrg, cnpj: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-slate-700">Tipo</label>
+                                <select
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                    value={selectedOrg.type}
+                                    onChange={(e) => setSelectedOrg({ ...selectedOrg, type: e.target.value })}
+                                >
+                                    <option value="prefeitura">Prefeitura</option>
+                                    <option value="camara">Câmara</option>
+                                    <option value="autarquia">Autarquia</option>
+                                    <option value="privada">Empresa Privada</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
+                                    <MapPin size={14} /> Cidade
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                    value={selectedOrg.city}
+                                    onChange={(e) => setSelectedOrg({ ...selectedOrg, city: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
+                                    <Globe size={14} /> Estado
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    maxLength={2}
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                    value={selectedOrg.state}
+                                    onChange={(e) => setSelectedOrg({ ...selectedOrg, state: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700 flex items-center gap-1">
+                                <Mail size={14} /> Email de Contato
+                            </label>
+                            <input
+                                type="email"
+                                required
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={selectedOrg.contact_email}
+                                onChange={(e) => setSelectedOrg({ ...selectedOrg, contact_email: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="pt-6 flex justify-end gap-3 border-t border-slate-100 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-bold shadow-lg shadow-brand-200"
+                            >
+                                Atualizar Dados
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
         </div>
     );
 };

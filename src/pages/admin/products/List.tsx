@@ -1,11 +1,57 @@
 import { useState } from 'react';
 import { MOCK_COURSES } from '../../../data/mocks';
 import { Search, BookOpen, Calendar, MapPin, MoreVertical, Plus } from 'lucide-react';
+import Modal from '../../../components/ui/Modal';
 
 const AdminCoursesList = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState<any>(null);
+    const [courses, setCourses] = useState<any[]>(MOCK_COURSES);
+    const [isEditing, setIsEditing] = useState(false);
 
-    const filteredCourses = MOCK_COURSES.filter((course: any) => {
+    const [courseForm, setCourseForm] = useState({
+        title: '',
+        category: 'Presencial',
+        city: '',
+        location: '',
+        date: '',
+        time: '',
+        investment: '',
+        description: ''
+    });
+
+    const handleEditClick = (course: any) => {
+        setCourseForm({ ...course });
+        setSelectedCourse(course);
+        setIsEditing(true);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteCourse = (id: number) => {
+        if (confirm('Tem certeza que deseja excluir este curso?')) {
+            setCourses(courses.filter(c => c.id !== id));
+        }
+    };
+
+    const handleCourseSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (isEditing) {
+            const updatedCourses = courses.map(c => c.id === selectedCourse.id ? { ...courseForm, id: c.id } : c);
+            setCourses(updatedCourses);
+            alert('Curso atualizado com sucesso!');
+        } else {
+            const newCourse = {
+                ...courseForm,
+                id: courses.length > 0 ? Math.max(...courses.map((c: any) => c.id)) + 1 : 1
+            };
+            setCourses([newCourse, ...courses]);
+            alert('Curso criado com sucesso!');
+        }
+        setIsModalOpen(false);
+    };
+
+    const filteredCourses = courses.filter((course: any) => {
         return course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             course.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
             course.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -18,7 +64,23 @@ const AdminCoursesList = () => {
                     <h1 className="text-2xl font-bold text-slate-900">Cursos e Treinamentos</h1>
                     <p className="text-slate-500">Gerencie a grade de cursos presenciais e online.</p>
                 </div>
-                <button className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors flex items-center">
+                <button
+                    onClick={() => {
+                        setIsEditing(false);
+                        setCourseForm({
+                            title: '',
+                            category: 'Presencial',
+                            city: '',
+                            location: '',
+                            date: '',
+                            time: '',
+                            investment: '',
+                            description: ''
+                        });
+                        setIsModalOpen(true);
+                    }}
+                    className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors flex items-center shadow-lg shadow-brand-200"
+                >
                     <Plus size={20} className="mr-2" />
                     Novo Curso
                 </button>
@@ -82,9 +144,22 @@ const AdminCoursesList = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-slate-400 hover:text-brand-600">
-                                            <MoreVertical size={20} />
-                                        </button>
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEditClick(course)}
+                                                className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                title="Editar"
+                                            >
+                                                <MoreVertical size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteCourse(course.id)}
+                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Excluir"
+                                            >
+                                                <Plus size={18} className="rotate-45" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -97,6 +172,124 @@ const AdminCoursesList = () => {
                     </div>
                 )}
             </div>
+
+            {/* Course Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={isEditing ? "Editar Curso" : "Novo Curso"}
+            >
+                <form onSubmit={handleCourseSubmit} className="space-y-4">
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Título do Curso</label>
+                        <input
+                            type="text"
+                            required
+                            className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                            value={courseForm.title}
+                            onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Categoria</label>
+                            <select
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={courseForm.category}
+                                onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
+                            >
+                                <option value="Presencial">Presencial</option>
+                                <option value="Online">Online</option>
+                                <option value="Hibrido">Híbrido</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Cidade</label>
+                            <input
+                                type="text"
+                                required
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={courseForm.city}
+                                onChange={(e) => setCourseForm({ ...courseForm, city: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Local (Endereço/Link)</label>
+                        <input
+                            type="text"
+                            required
+                            className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                            value={courseForm.location}
+                            onChange={(e) => setCourseForm({ ...courseForm, location: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Data</label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="Ex: 25 e 26 de Março"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={courseForm.date}
+                                onChange={(e) => setCourseForm({ ...courseForm, date: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Horário</label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="Ex: 08:30 às 17:30"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={courseForm.time}
+                                onChange={(e) => setCourseForm({ ...courseForm, time: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Investimento</label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="R$ 850,00"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                                value={courseForm.investment}
+                                onChange={(e) => setCourseForm({ ...courseForm, investment: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Descrição/Conteúdo</label>
+                        <textarea
+                            rows={3}
+                            className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                            value={courseForm.description}
+                            onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                        ></textarea>
+                    </div>
+
+                    <div className="pt-6 flex justify-end gap-3 border-t border-slate-100 mt-6">
+                        <button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-bold shadow-lg shadow-brand-200"
+                        >
+                            {isEditing ? "Salvar Alterações" : "Criar Curso"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };

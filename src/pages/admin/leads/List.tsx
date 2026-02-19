@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { MOCK_LEADS } from '../../../data/mocks';
-import { Search, Filter, MoreVertical, Phone, Mail, Building2, User, Briefcase, Plus, Calendar, Clock, MessageSquare, Tag } from 'lucide-react';
+import { Search, Filter, MoreVertical, Phone, Mail, Building2, User, Briefcase, Plus, Calendar, Clock, MessageSquare, Tag, LayoutGrid, List as ListIcon } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import Drawer from '../../../components/ui/Drawer';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 
 const LeadsList = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -10,6 +12,10 @@ const LeadsList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLead, setSelectedLead] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban'); // Iniciar em Kanban para visualização
+    const [leads, setLeads] = useState<any[]>(MOCK_LEADS);
+
+    const statuses = ['Novo', 'Qualificado', 'Contatado', 'Convertido'];
 
     // Form State
     const [newLead, setNewLead] = useState({
@@ -18,10 +24,11 @@ const LeadsList = () => {
         email: '',
         phone: '',
         organization: '',
-        source: 'Cadastro Manual'
+        source: 'Cadastro Manual',
+        status: ''
     });
 
-    const filteredLeads = MOCK_LEADS.filter((lead: any) => {
+    const filteredLeads = leads.filter((lead: any) => {
         const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             lead.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
             lead.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -41,8 +48,13 @@ const LeadsList = () => {
 
     const handleCreateLead = (e: React.FormEvent) => {
         e.preventDefault();
-        // Here we would normally save to backend/supabase
-        console.log('Criando lead:', newLead);
+        const lead = {
+            ...newLead,
+            id: leads.length + 1,
+            status: newLead.status || 'Novo',
+            created_at: new Date().toISOString()
+        };
+        setLeads([lead, ...leads]);
         alert('Lead criado com sucesso! (Simulação)');
         setIsModalOpen(false);
         setNewLead({
@@ -51,8 +63,36 @@ const LeadsList = () => {
             email: '',
             phone: '',
             organization: '',
-            source: 'Cadastro Manual'
+            source: 'Cadastro Manual',
+            status: ''
         });
+    };
+
+    const onDragEnd = (result: DropResult) => {
+        const { destination, source, draggableId } = result;
+
+        if (!destination) return;
+
+        if (
+            destination.droppableId === source.droppableId &&
+            destination.index === source.index
+        ) {
+            return;
+        }
+
+        const updatedLeads = leads.map(lead => {
+            if (lead.id.toString() === draggableId) {
+                return { ...lead, status: destination.droppableId };
+            }
+            return lead;
+        });
+
+        setLeads(updatedLeads);
+    };
+
+    const handleAddInColumn = (status: string) => {
+        setNewLead({ ...newLead, status });
+        setIsModalOpen(true);
     };
 
     const openLeadDetails = (lead: any) => {
@@ -67,13 +107,31 @@ const LeadsList = () => {
                     <h1 className="text-2xl font-bold text-slate-900">Gestão de Leads (CRM)</h1>
                     <p className="text-slate-500">Gerencie contatos e oportunidades com órgãos públicos.</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors flex items-center shadow-lg shadow-brand-200"
-                >
-                    <Plus size={20} className="mr-2" />
-                    Novo Lead
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="bg-slate-100 p-1 rounded-lg flex mr-2">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="Visão em Lista"
+                        >
+                            <ListIcon size={20} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="Visão Kanban"
+                        >
+                            <LayoutGrid size={20} />
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors flex items-center shadow-lg shadow-brand-200 text-sm font-bold"
+                    >
+                        <Plus size={18} className="mr-2" />
+                        Novo Lead
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -104,78 +162,162 @@ const LeadsList = () => {
                 </div>
             </div>
 
-            {/* List */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200">
-                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome / Cargo</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contato</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Organização</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Origem</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200">
-                            {filteredLeads.map((lead: any) => (
-                                <tr
-                                    key={lead.id}
-                                    className="hover:bg-slate-50 transition-colors cursor-pointer"
-                                    onClick={() => openLeadDetails(lead)}
-                                >
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold mr-3">
-                                                {lead.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-slate-900">{lead.name}</div>
-                                                <div className="text-xs text-slate-500">{lead.role}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex flex-col space-y-1">
-                                            <div className="flex items-center text-sm text-slate-600">
-                                                <Mail size={14} className="mr-2" /> {lead.email}
-                                            </div>
-                                            <div className="flex items-center text-sm text-slate-600">
-                                                <Phone size={14} className="mr-2" /> {lead.phone}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center text-sm text-slate-700">
-                                            <Building2 size={16} className="mr-2 text-slate-400" />
-                                            {lead.organization}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}`}>
-                                            {lead.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                        {lead.source}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button className="text-slate-400 hover:text-brand-600">
-                                            <MoreVertical size={20} />
-                                        </button>
-                                    </td>
+            {/* Content View */}
+            {viewMode === 'list' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200">
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome / Cargo</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contato</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Organização</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Origem</th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {filteredLeads.length === 0 && (
-                    <div className="p-8 text-center text-slate-500">
-                        Nenhum lead encontrado com os filtros atuais.
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                                {filteredLeads.map((lead: any) => (
+                                    <tr
+                                        key={lead.id}
+                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                        onClick={() => openLeadDetails(lead)}
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold mr-3">
+                                                    {lead.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-medium text-slate-900">{lead.name}</div>
+                                                    <div className="text-xs text-slate-500">{lead.role}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex flex-col space-y-1">
+                                                <div className="flex items-center text-sm text-slate-600">
+                                                    <Mail size={14} className="mr-2" /> {lead.email}
+                                                </div>
+                                                <div className="flex items-center text-sm text-slate-600">
+                                                    <Phone size={14} className="mr-2" /> {lead.phone}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center text-sm text-slate-700">
+                                                <Building2 size={16} className="mr-2 text-slate-400" />
+                                                {lead.organization}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}`}>
+                                                {lead.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                            {lead.source}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button
+                                                className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+                                                onClick={(e) => { e.stopPropagation(); }}
+                                            >
+                                                <MoreVertical size={20} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                )}
-            </div>
+                    {filteredLeads.length === 0 && (
+                        <div className="p-8 text-center text-slate-500">
+                            Nenhum lead encontrado com os filtros atuais.
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start overflow-x-auto pb-4">
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        {statuses.map(status => (
+                            <div key={status} className="flex flex-col min-w-[280px]">
+                                <div className="flex items-center justify-between mb-4 px-2">
+                                    <h3 className="font-bold text-slate-700 flex items-center text-sm">
+                                        <span className={`w-2.5 h-2.5 rounded-full mr-2 ${status === 'Novo' ? 'bg-blue-500' :
+                                            status === 'Qualificado' ? 'bg-yellow-500' :
+                                                status === 'Contatado' ? 'bg-purple-500' :
+                                                    'bg-green-500'
+                                            }`}></span>
+                                        {status}
+                                    </h3>
+                                    <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        {filteredLeads.filter(l => l.status === status).length}
+                                    </span>
+                                </div>
+
+                                <Droppable droppableId={status}>
+                                    {(provided) => (
+                                        <div
+                                            {...provided.droppableProps}
+                                            ref={provided.innerRef}
+                                            className="bg-slate-100/50 p-3 rounded-xl border border-slate-200/60 space-y-3 min-h-[500px]"
+                                        >
+                                            {filteredLeads.filter(l => l.status === status).map((lead: any, index: number) => (
+                                                <Draggable key={lead.id.toString()} draggableId={lead.id.toString()} index={index}>
+                                                    {(provided, snapshot) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                            onClick={() => openLeadDetails(lead)}
+                                                            className={`bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:shadow-md hover:border-brand-300 transition-all cursor-pointer group ${snapshot.isDragging ? 'rotate-2 shadow-xl ring-2 ring-brand-400 border-brand-400' : ''
+                                                                }`}
+                                                        >
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{lead.source}</span>
+                                                                <button
+                                                                    className="text-slate-300 group-hover:text-slate-500 transition-colors"
+                                                                    onClick={(e) => { e.stopPropagation(); }}
+                                                                >
+                                                                    <MoreVertical size={14} />
+                                                                </button>
+                                                            </div>
+                                                            <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition-colors">{lead.name}</h4>
+                                                            <div className="flex items-center text-[11px] text-slate-500 mb-4">
+                                                                <Building2 size={12} className="mr-1 text-slate-400" />
+                                                                <span className="truncate">{lead.organization}</span>
+                                                            </div>
+
+                                                            <div className="pt-3 border-t border-slate-50 flex items-center justify-between">
+                                                                <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200">
+                                                                    {lead.name.charAt(0)}
+                                                                </div>
+                                                                <div className="text-[10px] text-slate-400 flex items-center font-medium">
+                                                                    <Clock size={10} className="mr-1" /> Ativo
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+
+                                            <button
+                                                onClick={() => handleAddInColumn(status)}
+                                                className="w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs hover:border-brand-300 hover:text-brand-500 hover:bg-white transition-all flex items-center justify-center"
+                                            >
+                                                <Plus size={14} className="mr-1" /> Adicionar Lead
+                                            </button>
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </div>
+                        ))}
+                    </DragDropContext>
+                </div>
+            )}
 
             {/* Create Lead Modal */}
             <Modal
