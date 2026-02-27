@@ -37,8 +37,8 @@ const CoursesList = () => {
     return (
         <div className="min-h-screen bg-slate-50">
             <PageHeader
-                title="Cursos Presenciais"
-                subtitle="Capacitação técnica de alto nível para gestores públicos."
+                title="Cursos, Treinamentos e Capacitações"
+                subtitle="Formação técnica para a gestão pública com foco no desenvolvimento prático e qualificação contínua."
                 backgroundImage="https://images.unsplash.com/photo-1544531586-fde5298cdd40?auto=format&fit=crop&q=80&w=1920"
             />
 

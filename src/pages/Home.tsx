@@ -27,13 +27,13 @@ const Home = () => {
                         <span className="text-brand-300 text-sm font-medium tracking-wide">Excelência em Gestão Pública</span>
                     </div>
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-                        Soluções Técnicas para uma <br className="hidden lg:block" />
+                        Gestão pública com <br className="hidden lg:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
-                            Gestão Pública Segura
+                            clareza, técnica e confiança.
                         </span>
                     </h1>
                     <p className="mt-0 max-w-2xl mx-auto text-xl text-slate-300 mb-12 leading-relaxed">
-                        Referência em capacitação especializada, consultoria estratégica e segurança jurídica para municípios que buscam eficiência.
+                        Referência em capacitação e consultoria estratégica para uma gestão pública eficiente e segura.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <a href="/cursos" className="bg-brand-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-brand-500 transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)]">

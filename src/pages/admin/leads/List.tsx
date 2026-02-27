@@ -14,7 +14,7 @@ const LeadsList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('Todos');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedLead, setSelectedLead] = useState<any>(null);
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
 
@@ -25,10 +25,10 @@ const LeadsList = () => {
     // Form State
     const [newLead, setNewLead] = useState({
         name: '',
-        role: '',
+        role_title: '',
         email: '',
         phone: '',
-        organization: '',
+        organization_name: '',
         source: 'Cadastro Manual',
         status: ''
     });
@@ -81,11 +81,13 @@ const LeadsList = () => {
             if (!supabase) throw new Error('Supabase client not initialized');
             const dataToInsert = {
                 name: newLead.name,
-                role: newLead.role,
+                role_title: newLead.role_title,
                 email: newLead.email,
                 phone: newLead.phone,
+                organization_name: newLead.organization_name,
                 source: newLead.source,
                 status: mapUIToDBStatus(newLead.status || 'Novo'),
+                lgpd_consent: true // Default for manual entry
             };
 
             await supabase.from('leads').insert([dataToInsert]);
@@ -95,10 +97,10 @@ const LeadsList = () => {
             setIsModalOpen(false);
             setNewLead({
                 name: '',
-                role: '',
+                role_title: '',
                 email: '',
                 phone: '',
-                organization: '',
+                organization_name: '',
                 source: 'Cadastro Manual',
                 status: ''
             });
@@ -137,7 +139,7 @@ const LeadsList = () => {
         setIsModalOpen(true);
     };
 
-    const openLeadDetails = (lead: any) => {
+    const openLeadDetails = (lead: Lead) => {
         setSelectedLead(lead);
         setIsDrawerOpen(true);
     };
@@ -237,7 +239,7 @@ const LeadsList = () => {
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-medium text-slate-900">{lead.name}</div>
-                                                    <div className="text-xs text-slate-500">{lead.role}</div>
+                                                    <div className="text-xs text-slate-500">{lead.role_title}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -254,7 +256,7 @@ const LeadsList = () => {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center text-sm text-slate-700">
                                                 <Building2 size={16} className="mr-2 text-slate-400" />
-                                                -
+                                                {lead.organization_name || '-'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -335,7 +337,7 @@ const LeadsList = () => {
                                                             <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition-colors">{lead.name}</h4>
                                                             <div className="flex items-center text-[11px] text-slate-500 mb-4">
                                                                 <Building2 size={12} className="mr-1 text-slate-400" />
-                                                                <span className="truncate">-</span>
+                                                                <span className="truncate">{lead.organization_name || '-'}</span>
                                                             </div>
 
                                                             <div className="pt-3 border-t border-slate-50 flex items-center justify-between">
@@ -395,8 +397,8 @@ const LeadsList = () => {
                                 type="text"
                                 required
                                 className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
-                                value={newLead.role}
-                                onChange={(e) => setNewLead({ ...newLead, role: e.target.value })}
+                                value={newLead.role_title}
+                                onChange={(e) => setNewLead({ ...newLead, role_title: e.target.value })}
                             />
                         </div>
                     </div>
@@ -409,8 +411,8 @@ const LeadsList = () => {
                             type="text"
                             required
                             className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
-                            value={newLead.organization}
-                            onChange={(e) => setNewLead({ ...newLead, organization: e.target.value })}
+                            value={newLead.organization_name}
+                            onChange={(e) => setNewLead({ ...newLead, organization_name: e.target.value })}
                         />
                     </div>
 
@@ -474,7 +476,7 @@ const LeadsList = () => {
                             </div>
                             <div className="ml-4">
                                 <h4 className="text-lg font-bold text-slate-900">{selectedLead.name}</h4>
-                                <p className="text-sm text-slate-500">{selectedLead.role}</p>
+                                <p className="text-sm text-slate-500">{selectedLead.role_title}</p>
                                 <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(mapDBStatusToUI(selectedLead.status))} uppercase tracking-wider`}>
                                     {mapDBStatusToUI(selectedLead.status)}
                                 </span>
@@ -487,7 +489,7 @@ const LeadsList = () => {
                                 <Mail size={18} className="mr-2 text-brand-600" /> Email
                             </a>
                             <a
-                                href={`https://wa.me/${selectedLead.phone.replace(/\D/g, '')}`}
+                                href={`https://wa.me/${(selectedLead.phone || '').replace(/\D/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors font-medium"
@@ -502,10 +504,17 @@ const LeadsList = () => {
                                 <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Informações Gerais</h5>
                                 <div className="space-y-4">
                                     <div className="flex items-start">
+                                        <Mail size={18} className="text-slate-400 mt-0.5 mr-3" />
+                                        <div>
+                                            <p className="text-xs text-slate-500 font-medium">Email</p>
+                                            <p className="text-sm text-slate-900 font-semibold">{selectedLead.email}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start">
                                         <Building2 size={18} className="text-slate-400 mt-0.5 mr-3" />
                                         <div>
                                             <p className="text-xs text-slate-500 font-medium">Organização</p>
-                                            <p className="text-sm text-slate-900 font-semibold">-</p>
+                                            <p className="text-sm text-slate-900 font-semibold">{selectedLead.organization_name || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start">
@@ -529,32 +538,16 @@ const LeadsList = () => {
 
                             <div>
                                 <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Histórico de Atividade</h5>
-                                <div className="space-y-4 py-2 border-l-2 border-slate-100 ml-2 pl-6">
-                                    <div className="relative">
-                                        <div className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-brand-500 ring-4 ring-white"></div>
-                                        <p className="text-sm font-medium text-slate-900">Download de Conteúdo Programático</p>
-                                        <p className="text-xs text-slate-500 flex items-center mt-1">
-                                            <Clock size={12} className="mr-1" /> Ontem às 14:30
-                                        </p>
-                                    </div>
-                                    <div className="relative">
-                                        <div className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-slate-300 ring-4 ring-white"></div>
-                                        <p className="text-sm font-medium text-slate-900">Interesse via Landing Page</p>
-                                        <p className="text-xs text-slate-500 flex items-center mt-1">
-                                            <Clock size={12} className="mr-1" /> 18/02/2026 às 10:15
-                                        </p>
-                                    </div>
+                                <div className="py-4 text-center">
+                                    <p className="text-sm text-slate-400 italic">Nenhuma atividade registrada até o momento.</p>
                                 </div>
                             </div>
 
                             <div>
                                 <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Notas e Observações</h5>
                                 <div className="space-y-4">
-                                    <div className="p-3 bg-yellow-50 text-yellow-800 rounded-lg border border-yellow-100 text-sm italic">
-                                        <div className="flex items-center mb-1 text-yellow-900 not-italic font-bold">
-                                            <MessageSquare size={14} className="mr-1" /> Nota Adicional
-                                        </div>
-                                        "Interessado na nova lei de licitações para treinamento in-company da equipe de compras."
+                                    <div className="py-2 text-center">
+                                        <p className="text-xs text-slate-400 italic">Nenhuma nota adicionada.</p>
                                     </div>
                                     <textarea
                                         placeholder="Adicionar uma nova nota..."

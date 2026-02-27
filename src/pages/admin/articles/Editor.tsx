@@ -147,9 +147,10 @@ const ArticleEditor = () => {
 
             alert(`Artigo ${isEditing ? 'atualizado' : 'criado'} com sucesso!`);
             navigate('/admin/articles');
-        } catch (err: any) {
+        } catch (err) {
             console.error('Erro ao salvar:', err);
-            alert(`Falha ao salvar: ${err?.message || 'Erro desconhecido'}`);
+            const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+            alert(`Falha ao salvar: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -176,9 +177,10 @@ const ArticleEditor = () => {
                 .getPublicUrl(fileName);
 
             setArticle(prev => ({ ...prev, featured_image: publicUrl }));
-        } catch (err: any) {
+        } catch (err) {
             console.error('Upload error:', err);
-            alert(`Erro no upload: ${err?.message || 'Tente novamente'}`);
+            const errorMessage = err instanceof Error ? err.message : 'Tente novamente';
+            alert(`Erro no upload: ${errorMessage}`);
         } finally {
             setUploadingImage(false);
             if (fileInputRef.current) fileInputRef.current.value = '';

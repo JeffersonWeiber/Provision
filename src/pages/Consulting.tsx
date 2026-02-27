@@ -1,46 +1,35 @@
 import PageHeader from '../components/ui/PageHeader';
-import { HandCoins, FileCheck, BarChart3, Check } from 'lucide-react';
+import { HandCoins, BarChart3, Check } from 'lucide-react';
 import ConsultingCTA from '../components/home/ConsultingCTA';
 
 const Consulting = () => {
     const services = [
         {
-            id: 'financeiro',
-            title: 'Planejamento Orçamentário',
+            id: 'assessoria',
+            title: 'Consultoria e Assessoria em Gestão Pública',
             icon: HandCoins,
-            desc: 'Suporte integral na elaboração e execução das peças orçamentárias obrigatórias.',
+            image: '/assets/images/assessoria.png',
+            desc: 'Suporte estratégico e operacional para administrações municipais, câmaras e equipes técnicas.',
             details: [
-                'Elaboração do Plano Plurianual (PPA)',
-                'Lei de Diretrizes Orçamentárias (LDO)',
-                'Lei Orçamentária Anual (LOA)',
-                'Audiências Públicas de Metas Fiscais',
-                'Acompanhamento da Execução Orçamentária'
+                'Assessoria técnica especializada em planejamento e orçamento',
+                'Elaboração e acompanhamento de instrumentos fundamentais (PPA, LDO, LOA)',
+                'Suporte na tomada de decisões estratégicas',
+                'Foco integral na legalidade, eficiência e clareza dos processos administrativo-financeiros',
+                'Atendimento personalizado respeitando a realidade de cada órgão'
             ]
         },
         {
-            id: 'contas',
-            title: 'Prestação de Contas',
-            icon: FileCheck,
-            desc: 'Segurança jurídica nas prestações de contas junto aos Tribunais (TCE/TCU).',
-            details: [
-                'Análise prévia de conformidade',
-                'Instrução de processos licitatórios',
-                'Defesa técnica em processos administrativos',
-                'Resposta a diligências do Tribunal de Contas',
-                'Organização documental preventiva'
-            ]
-        },
-        {
-            id: 'gestao',
-            title: 'Gestão Estratégica',
+            id: 'in-company',
+            title: 'Consultoria In Company',
             icon: BarChart3,
-            desc: 'Modernização administrativa e implementação de governança.',
+            image: '/assets/images/in-company.png',
+            desc: 'Acompanhamento próximo, direto na estrutura do órgão, com análise prática das rotinas locais.',
             details: [
-                'Reforma Administrativa e Organogramas',
-                'Implantação de indicadores de desempenho',
-                'Mapeamento e otimização de processos',
-                'Consultoria em Recursos Humanos (Estatutos)',
-                'Implantação de controles internos'
+                'Apoio técnico contínuo presencial ou remoto dedicado',
+                'Esclarecimento de dúvidas no dia a dia da administração',
+                'Prevenção proativa de inconsistências e riscos fiscais',
+                'Fortalecimento da autonomia técnica das equipes internas',
+                'Análise prática das rotinas e orientação aplicada à realidade local'
             ]
         }
     ];
@@ -79,11 +68,12 @@ const Consulting = () => {
                                 </div>
                                 <div className="flex-1 relative w-full">
                                     <div className="absolute inset-0 bg-slate-100 rounded-2xl transform rotate-3 scale-[0.98]"></div>
-                                    <div className="relative bg-white p-2 rounded-2xl shadow-lg border border-slate-100">
-                                        {/* Placeholder for service specific image */}
-                                        <div className="aspect-video bg-slate-200 rounded-xl flex items-center justify-center text-slate-400">
-                                            Imagem Ilustrativa: {service.title}
-                                        </div>
+                                    <div className="relative overflow-hidden rounded-2xl shadow-xl transition-transform hover:scale-[1.02] duration-500">
+                                        <img
+                                            src={service.image}
+                                            alt={service.title}
+                                            className="w-full h-full object-cover aspect-video"
+                                        />
                                     </div>
                                 </div>
                             </div>

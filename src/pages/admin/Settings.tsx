@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Settings as SettingsIcon,
     Save,
@@ -39,9 +39,12 @@ const Settings = () => {
         meta_pixel_id: ''
     });
 
+    const isInitialized = useRef(false);
     useEffect(() => {
-        if (initialSettings) {
+        if (initialSettings && !isInitialized.current) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSettings(prev => ({ ...prev, ...initialSettings }));
+            isInitialized.current = true;
         }
     }, [initialSettings]);
 
@@ -54,8 +57,8 @@ const Settings = () => {
                 setMessage({ type: 'success', text: 'Configurações salvas com sucesso!' });
                 setTimeout(() => setMessage(null), 3000);
             },
-            onError: (error: any) => {
-                console.error('Erro ao salvar:', error);
+            onError: (err) => {
+                console.error('Erro ao salvar:', err);
                 setMessage({ type: 'error', text: 'Erro ao salvar as configurações. Tente novamente.' });
             }
         });
@@ -123,7 +126,7 @@ const Settings = () => {
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id as 'geral' | 'lgpd' | 'social' | 'marketing')}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id
                                     ? 'bg-white text-brand-600 shadow-sm border border-slate-200'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'

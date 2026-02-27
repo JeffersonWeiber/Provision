@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import PageHeader from '../components/ui/PageHeader';
-import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, Send, CheckCircle2 } from 'lucide-react';
 import { maskPhone } from '../utils/masks';
 import { useAddLead } from '../hooks/useLeads';
 import { useSettings } from '../hooks/useSettings';
@@ -13,9 +13,11 @@ const Contact = () => {
 
     const contactEmail = settings?.contact_email || 'contato@provision.com.br';
     const contactPhone = settings?.contact_whatsapp || '45999184518';
-    const formattedPhone = contactPhone.length > 10
-        ? `(${contactPhone.slice(2, 4)}) ${contactPhone.slice(4, 9)}-${contactPhone.slice(9)}`
-        : contactPhone;
+    const formattedPhone = contactPhone.length >= 11
+        ? `(${contactPhone.slice(0, 2)}) ${contactPhone.slice(2, 7)}-${contactPhone.slice(7)}`
+        : contactPhone.length === 10
+            ? `(${contactPhone.slice(0, 2)}) ${contactPhone.slice(2, 6)}-${contactPhone.slice(6)}`
+            : contactPhone;
 
     const [formData, setFormData] = useState({
         name: '',
@@ -120,17 +122,7 @@ const Contact = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start">
-                                    <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 flex-shrink-0">
-                                        <MapPin size={24} />
-                                    </div>
-                                    <div className="ml-6">
-                                        <h3 className="text-lg font-bold text-slate-900">Sede Administrativa</h3>
-                                        <p className="text-slate-600 mt-1">
-                                            Toledo - Paraná<br />
-                                        </p>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
 

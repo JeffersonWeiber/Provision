@@ -10,15 +10,16 @@ const BlogDetail = () => {
     const { data: article, isLoading } = useArticleBySlug(slug);
     const [imgError, setImgError] = useState(false);
 
+    const articleContent = article?.content;
     // Parse markdown content to HTML (also handle stored \\n literal strings)
     const parsedContent = useMemo(() => {
-        if (!article?.content) return null;
+        if (!articleContent) return null;
         // Unescape literal \n sequences stored as strings in the DB
-        const unescaped = article.content
+        const unescaped = articleContent
             .replace(/\\n/g, '\n')
             .replace(/\\t/g, '\t');
         return marked.parse(unescaped, { breaks: true }) as string;
-    }, [article?.content]);
+    }, [articleContent]);
 
     if (isLoading) {
         return (

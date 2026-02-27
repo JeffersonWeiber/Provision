@@ -1,6 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 
+export interface CourseSettings {
+    category?: string;
+    date?: string;
+    time?: string;
+    location?: string;
+    city?: string;
+    program?: string;
+    syllabus_url?: string;
+    [key: string]: unknown;
+}
+
 export interface Product {
     id: string;
     title: string;
@@ -10,12 +21,12 @@ export interface Product {
     type: 'online' | 'presential';
     status: 'draft' | 'published' | 'archived';
     price: number | null;
-    settings: any;
+    settings: CourseSettings;
     created_at: string;
 }
 
 export const useProducts = (statusFilter?: 'published' | 'draft' | 'archived' | 'all') => {
-    return useQuery({
+    return useQuery<Product[], Error>({
         queryKey: ['products', statusFilter],
         queryFn: async () => {
             if (!supabase) throw new Error('Supabase client not initialized');

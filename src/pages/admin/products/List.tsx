@@ -11,7 +11,7 @@ const AdminCoursesList = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedCourse, setSelectedCourse] = useState<any>(null);
+    const [selectedCourse, setSelectedCourse] = useState<Product | null>(null);
     const { data: courses = [], isLoading } = useProducts('all');
     const [isEditing, setIsEditing] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -31,7 +31,7 @@ const AdminCoursesList = () => {
         program: ''
     });
 
-    const handleEditClick = (course: any) => {
+    const handleEditClick = (course: Product) => {
         setCourseForm({
             title: course.title || '',
             category: course.settings?.category || 'Presencial',
@@ -74,9 +74,10 @@ const AdminCoursesList = () => {
                 .getPublicUrl(fileName);
 
             setCourseForm(prev => ({ ...prev, thumbnail_url: publicUrl }));
-        } catch (err: any) {
-            console.error('Upload error:', err);
-            alert(`Erro no upload: ${err?.message || 'Tente novamente.'}`);
+        } catch (err: unknown) {
+            const error = err as Error;
+            console.error('Upload error:', error);
+            alert(`Erro no upload: ${error?.message || 'Tente novamente.'}`);
         } finally {
             setUploadingImage(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -104,9 +105,10 @@ const AdminCoursesList = () => {
 
             setCourseForm(prev => ({ ...prev, syllabus_url: publicUrl }));
             alert('PDF enviado com sucesso!');
-        } catch (err: any) {
-            console.error('Upload error:', err);
-            alert(`Erro no upload do PDF: ${err?.message || 'Tente novamente.'}`);
+        } catch (err: unknown) {
+            const error = err as Error;
+            console.error('Upload error:', error);
+            alert(`Erro no upload do PDF: ${error?.message || 'Tente novamente.'}`);
         }
     };
 
@@ -160,9 +162,10 @@ const AdminCoursesList = () => {
 
             queryClient.invalidateQueries({ queryKey: ['products'] });
             setIsModalOpen(false);
-        } catch (error: any) {
-            console.error("Erro ao salvar", error);
-            alert(`Falha ao salvar o curso: ${error?.message || 'Erro desconhecido'}`);
+        } catch (error: unknown) {
+            const err = error as Error;
+            console.error("Erro ao salvar", err);
+            alert(`Falha ao salvar o curso: ${err?.message || 'Erro desconhecido'}`);
         }
     };
 

@@ -16,22 +16,39 @@ const About = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                         <div>
                             <h2 className="text-brand-600 font-semibold tracking-wide uppercase text-sm mb-2">Nossa História</h2>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-6">Compromisso com a Excelência Pública</h3>
-                            <p className="text-slate-600 text-lg leading-relaxed mb-6">
-                                A Provision nasceu da necessidade de oferecer suporte técnico especializado e prático para gestores públicos municipais.
-                                Entendemos os desafios diários das prefeituras, câmaras e autarquias, desde a complexidade normativa até a execução orçamentária.
-                            </p>
-                            <p className="text-slate-600 text-lg leading-relaxed">
-                                Nossa metodologia une a teoria jurídica e contábil com a prática administrativa, garantindo que nossos alunos e clientes
-                                não apenas compreendam a lei, mas saibam como aplicá-la com segurança e eficiência.
-                            </p>
+                            <h3 className="text-3xl font-bold text-slate-900 mb-6">Trajetória Pautada pela Confiança e Excelência</h3>
+                            <div className="space-y-4 text-slate-600 text-lg leading-relaxed">
+                                <p>
+                                    A Provision Assessoria Ltda nasceu em 2013, com o propósito de apoiar a administração pública por meio de orientação técnica responsável, planejamento estruturado e compromisso com a boa gestão dos recursos públicos.
+                                </p>
+                                <p>
+                                    Nossa experiência se traduz em números e resultados concretos:
+                                </p>
+                                <ul className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
+                                    <li className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                                        <span className="block text-2xl font-bold text-brand-600">14</span>
+                                        <span className="text-sm font-medium">PPAs elaborados</span>
+                                    </li>
+                                    <li className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                                        <span className="block text-2xl font-bold text-brand-600">44</span>
+                                        <span className="text-sm font-medium">LDOs estruturadas</span>
+                                    </li>
+                                    <li className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                                        <span className="block text-2xl font-bold text-brand-600">45</span>
+                                        <span className="text-sm font-medium">LOAs desenvolvidas</span>
+                                    </li>
+                                </ul>
+                                <p>
+                                    Em uma nova etapa da sua história, a Provision amplia sua atuação com treinamentos e capacitações, preparando servidores e equipes técnicas para administrações mais técnicas, responsáveis e preparadas para os desafios do presente e do futuro.
+                                </p>
+                            </div>
                         </div>
                         <div className="relative">
                             <div className="absolute inset-0 bg-brand-200 rounded-2xl transform rotate-3 scale-105"></div>
                             <img
                                 src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800"
                                 alt="Equipe reunida"
-                                className="relative rounded-2xl shadow-xl w-full object-cover h-[400px]"
+                                className="relative rounded-2xl shadow-xl w-full object-cover h-[450px]"
                             />
                         </div>
                     </div>
@@ -47,8 +64,8 @@ const About = () => {
                                 <Target size={24} />
                             </div>
                             <h3 className="text-xl font-bold text-slate-900 mb-4">Missão</h3>
-                            <p className="text-slate-600">
-                                Capacitar gestores e servidores públicos com conhecimento técnico de alta qualidade, promovendo uma administração eficiente e legalmente segura.
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                Oferecer assessoria, consultoria e capacitação em planejamento, orçamento e gestão pública, apoiando gestores e equipes técnicas na tomada de decisões seguras, no fortalecimento institucional e na correta aplicação dos recursos públicos.
                             </p>
                         </div>
                         <div className="bg-white p-8 rounded-xl shadow-sm border-t-4 border-brand-500 hover:shadow-md transition-shadow">
@@ -56,8 +73,8 @@ const About = () => {
                                 <Eye size={24} />
                             </div>
                             <h3 className="text-xl font-bold text-slate-900 mb-4">Visão</h3>
-                            <p className="text-slate-600">
-                                Ser a referência nacional em educação corporativa e consultoria para o setor público municipal, reconhecida pela inovação e resultados.
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                Ser reconhecida como referência em consultoria, assessoria e capacitação em gestão pública municipal, contribuindo para administrações mais eficientes, técnicas e preparadas, por meio de soluções estratégicas e formação contínua de pessoas.
                             </p>
                         </div>
                         <div className="bg-white p-8 rounded-xl shadow-sm border-t-4 border-brand-500 hover:shadow-md transition-shadow">
@@ -65,11 +82,12 @@ const About = () => {
                                 <Award size={24} />
                             </div>
                             <h3 className="text-xl font-bold text-slate-900 mb-4">Valores</h3>
-                            <ul className="space-y-2 text-slate-600">
-                                <li className="flex items-center"><CheckCircle size={16} className="text-brand-500 mr-2" /> Ética e Transparência</li>
-                                <li className="flex items-center"><CheckCircle size={16} className="text-brand-500 mr-2" /> Excelência Técnica</li>
-                                <li className="flex items-center"><CheckCircle size={16} className="text-brand-500 mr-2" /> Inovação Constante</li>
-                                <li className="flex items-center"><CheckCircle size={16} className="text-brand-500 mr-2" /> Foco no Resultado</li>
+                            <ul className="space-y-3 text-slate-600 text-xs">
+                                <li className="flex items-start"><CheckCircle size={14} className="text-brand-500 mr-2 mt-0.5" /> <strong>Responsabilidade Pública:</strong> Compromisso com a legalidade e transparência.</li>
+                                <li className="flex items-start"><CheckCircle size={14} className="text-brand-500 mr-2 mt-0.5" /> <strong>Excelência Técnica:</strong> Atuação baseada em conhecimento sólido.</li>
+                                <li className="flex items-start"><CheckCircle size={14} className="text-brand-500 mr-2 mt-0.5" /> <strong>Ética:</strong> Integridade e respeito institucional.</li>
+                                <li className="flex items-start"><CheckCircle size={14} className="text-brand-500 mr-2 mt-0.5" /> <strong>Clareza:</strong> Comunicação objetiva e didática.</li>
+                                <li className="flex items-start"><CheckCircle size={14} className="text-brand-500 mr-2 mt-0.5" /> <strong>Comprometimento:</strong> Dedicação real a cada projeto.</li>
                             </ul>
                         </div>
                     </div>

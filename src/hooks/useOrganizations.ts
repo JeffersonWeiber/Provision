@@ -3,18 +3,13 @@ import { supabase } from '../lib/supabase';
 
 export interface Organization {
     id: string;
+    name: string;
     cnpj: string;
-    nomeRazaosocial: string;
-    nomeFantasia: string;
-    tipoLogradouro: string;
-    logradouro: string;
-    numero: string;
-    bairro: string;
-    cep: string;
-    uf: string;
-    municipio: string;
-    email: string;
-    telefone: string;
+    type: 'prefeitura' | 'camara' | 'autarquia' | 'privada';
+    city: string;
+    state: string;
+    contact_email: string;
+    status: 'active' | 'inactive' | 'pending';
     created_at: string;
 }
 

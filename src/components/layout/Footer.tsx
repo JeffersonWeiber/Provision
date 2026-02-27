@@ -1,4 +1,4 @@
-import { Phone, Mail, Instagram, Linkedin, Facebook, Youtube, ArrowRight } from 'lucide-react';
+import { Phone, Mail, Instagram, Linkedin, Facebook, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Logo from '../../assets/logo-provision.svg';
 import { useSettings } from '../../hooks/useSettings';
@@ -13,9 +13,11 @@ const Footer = () => {
 
     const contactEmail = settings?.contact_email || 'contato@provision.com.br';
     const contactPhone = settings?.contact_whatsapp || '45999184518';
-    const formattedPhone = contactPhone.length > 10
-        ? `(${contactPhone.slice(2, 4)}) ${contactPhone.slice(4, 9)}-${contactPhone.slice(9)}`
-        : contactPhone;
+    const formattedPhone = contactPhone.length >= 11
+        ? `(${contactPhone.slice(0, 2)}) ${contactPhone.slice(2, 7)}-${contactPhone.slice(7)}`
+        : contactPhone.length === 10
+            ? `(${contactPhone.slice(0, 2)}) ${contactPhone.slice(2, 6)}-${contactPhone.slice(6)}`
+            : contactPhone;
 
     const socialLinks = [
         { icon: Instagram, url: settings?.instagram_url || 'https://instagram.com/provision', label: 'Instagram' },

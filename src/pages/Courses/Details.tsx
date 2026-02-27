@@ -63,8 +63,8 @@ const CourseDetails = () => {
                 setIsSuccess(false);
                 setEnrollForm({ name: '', email: '', phone: '', org: '' });
             }, 5000);
-        } catch (error: any) {
-            console.error('Erro na inscrição:', error);
+        } catch (err) {
+            console.error('Erro na inscrição:', err);
             alert('Erro ao realizar inscrição. Por favor, tente novamente.');
         } finally {
             setIsSubmitting(false);
