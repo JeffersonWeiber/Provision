@@ -1,19 +1,34 @@
 import { useState } from 'react';
 import PageHeader from '../../components/ui/PageHeader';
-import { MOCK_ARTICLES } from '../../data/mocks';
+import { useArticles } from '../../hooks/useArticles';
+import SEO from '../../components/SEO';
 import { Link } from 'react-router-dom';
 import { Search, User, ArrowRight } from 'lucide-react';
 
 const BlogList = () => {
+    const { data: articles = [], isLoading } = useArticles();
     const [filter, setFilter] = useState('Todos');
-    const categories = ['Todos', ...Array.from(new Set(MOCK_ARTICLES.map(a => a.category)))];
+
+    const categories = ['Todos', ...Array.from(new Set(articles.map(a => a.category)))];
 
     const filteredArticles = filter === 'Todos'
-        ? MOCK_ARTICLES
-        : MOCK_ARTICLES.filter(a => a.category === filter);
+        ? articles
+        : articles.filter(a => a.category === filter);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white">
+            <SEO
+                title="Blog e Atualizações Normativas"
+                description="Acompanhe as últimas atualizações legislativas, artigos técnicos e orientações para a gestão pública municipal."
+            />
             <PageHeader
                 title="Conteúdos & Normativas"
                 subtitle="Artigos técnicos, atualizações legislativas e conteúdos exclusivos."

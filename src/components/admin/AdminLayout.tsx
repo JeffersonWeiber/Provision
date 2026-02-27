@@ -7,7 +7,8 @@ import {
     GraduationCap,
     Settings,
     LogOut,
-    Menu
+    Menu,
+    FileText
 } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '../../assets/Ativo 2.svg';
@@ -22,6 +23,7 @@ const AdminLayout = () => {
         { path: '/admin/organizations', name: 'Organizações', icon: Building2 },
         { path: '/admin/products', name: 'Cursos', icon: BookOpen },
         { path: '/admin/enrollments', name: 'Matrículas', icon: GraduationCap },
+        { path: '/admin/articles', name: 'Artigos (Blog)', icon: FileText },
         { path: '/admin/settings', name: 'Configurações', icon: Settings },
     ];
 

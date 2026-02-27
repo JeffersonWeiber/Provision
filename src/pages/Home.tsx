@@ -1,3 +1,4 @@
+import SEO from '../components/SEO';
 import ActionAreas from '../components/home/ActionAreas';
 import UpcomingCourses from '../components/home/UpcomingCourses';
 import NormativeUpdates from '../components/home/NormativeUpdates';
@@ -6,6 +7,10 @@ import ConsultingCTA from '../components/home/ConsultingCTA';
 const Home = () => {
     return (
         <div className="min-h-screen">
+            <SEO
+                title="Início"
+                description="Soluções Técnicas para uma Gestão Pública Segura e Eficiente. Referência em capacitação e consultoria para municípios."
+            />
             {/* HERO SECTION */}
             <section className="relative bg-slate-900 text-white pt-32 pb-40 overflow-hidden">
                 <div className="absolute inset-0">
