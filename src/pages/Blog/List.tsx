@@ -65,35 +65,41 @@ const BlogList = () => {
 
                     {/* Articles List */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {filteredArticles.map((article) => (
-                            <div key={article.id} className="group flex flex-col h-full rounded-2xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 bg-white border border-slate-100">
-                                <div className="h-48 overflow-hidden">
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                    />
+                        {filteredArticles.length === 0 && !isLoading && (
+                            <div className="col-span-full py-12 text-center text-slate-500">
+                                Nenhum artigo encontrado nesta categoria.
+                            </div>
+                        )}
+                        {filteredArticles.map(article => (
+                            <div key={article.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-brand-500/5 transition-all group flex flex-col h-full">
+                                <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                                    {article.featured_image && (
+                                        <img
+                                            src={article.featured_image}
+                                            alt={article.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    )}
+                                    <div className="absolute top-4 left-4">
+                                        <span className="bg-white/90 backdrop-blur text-brand-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                                            {article.category}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="p-8 flex-1 flex flex-col">
-                                    <div className="flex items-center space-x-4 text-xs text-slate-500 mb-4 font-medium uppercase tracking-wider">
-                                        <span className="text-brand-600">{article.category}</span>
+                                <div className="p-6 flex flex-col flex-1">
+                                    <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 mb-3">
+                                        <span>{new Date(article.published_at || article.created_at).toLocaleDateString()}</span>
                                         <span>•</span>
-                                        <span>{article.date}</span>
+                                        <span className="flex items-center gap-1"><User size={12} /> {article.author}</span>
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-brand-600 transition-colors">
-                                        <Link to={`/blog/${article.id}`}>{article.title}</Link>
-                                    </h3>
-                                    <p className="text-slate-600 text-sm leading-relaxed mb-6 flex-grow">
-                                        {article.summary}
-                                    </p>
-                                    <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-auto">
-                                        <div className="flex items-center text-xs text-slate-500">
-                                            <User size={14} className="mr-2" /> {article.author}
-                                        </div>
-                                        <Link to={`/blog/${article.id}`} className="text-brand-600 font-bold text-sm flex items-center hover:translate-x-1 transition-transform">
-                                            Ler mais <ArrowRight size={16} className="ml-1" />
-                                        </Link>
-                                    </div>
+                                    <h2 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-brand-600 transition-colors line-clamp-2">
+                                        <Link to={`/conteudos/${article.slug}`}>{article.title}</Link>
+                                    </h2>
+                                    <p className="text-slate-600 mb-6 line-clamp-3 flex-1">{article.summary}</p>
+
+                                    <Link to={`/conteudos/${article.slug}`} className="text-brand-600 font-bold hover:text-brand-700 transition-colors flex items-center gap-2 group/link mt-auto">
+                                        Ler Artigo <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
+                                    </Link>
                                 </div>
                             </div>
                         ))}

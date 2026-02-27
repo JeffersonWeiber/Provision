@@ -1,17 +1,20 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const ProtectedRoute = () => {
-    // TODO: Integrate with Supabase Auth (Context)
-    const isAuthenticated = true; // Mocked for development
-    const userRole = 'admin'; // Mocked
+    const { isAuthenticated, isInitialized } = useAuthStore();
+    const location = useLocation();
 
-    if (!isAuthenticated) {
-        return <Navigate to="/admin/login" replace />;
+    if (!isInitialized) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+            </div>
+        );
     }
 
-    // Optional: Check role
-    if (userRole !== 'admin') {
-        return <Navigate to="/" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
     return <Outlet />;

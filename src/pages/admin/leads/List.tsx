@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { MOCK_LEADS } from '../../../data/mocks';
+import type { Lead } from '../../../hooks/useLeads';
+import { useLeads } from '../../../hooks/useLeads';
+import { supabase } from '../../../lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, Filter, MoreVertical, Phone, Mail, Building2, User, Briefcase, Plus, Calendar, Clock, MessageSquare, Tag, LayoutGrid, List as ListIcon } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import Drawer from '../../../components/ui/Drawer';
@@ -7,13 +10,15 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 
 const LeadsList = () => {
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('Todos');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLead, setSelectedLead] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban'); // Iniciar em Kanban para visualização
-    const [leads, setLeads] = useState<any[]>(MOCK_LEADS);
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
+
+    const { data: rawLeads = [], isLoading } = useLeads();
 
     const statuses = ['Novo', 'Qualificado', 'Contatado', 'Convertido'];
 
@@ -28,11 +33,35 @@ const LeadsList = () => {
         status: ''
     });
 
-    const filteredLeads = leads.filter((lead: any) => {
+    // Map raw status from DB to UI columns, or fallback
+    const mapDBStatusToUI = (status: string) => {
+        const mapping: Record<string, string> = {
+            'new': 'Novo',
+            'qualified': 'Qualificado',
+            'contacted': 'Contatado',
+            'converted': 'Convertido',
+            'lost': 'Perdido',
+        };
+        return mapping[status] || 'Novo';
+    };
+
+    const mapUIToDBStatus = (uiStatus: string) => {
+        const mapping: Record<string, string> = {
+            'Novo': 'new',
+            'Qualificado': 'qualified',
+            'Contatado': 'contacted',
+            'Convertido': 'converted',
+            'Perdido': 'lost'
+        };
+        return mapping[uiStatus] || 'new';
+    };
+
+    const filteredLeads = rawLeads.filter((lead: Lead) => {
         const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lead.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lead.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'Todos' || lead.status === statusFilter;
+            (lead.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+        const uiStatus = mapDBStatusToUI(lead.status);
+        const matchesStatus = statusFilter === 'Todos' || uiStatus === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
@@ -46,29 +75,40 @@ const LeadsList = () => {
         }
     };
 
-    const handleCreateLead = (e: React.FormEvent) => {
+    const handleCreateLead = async (e: React.FormEvent) => {
         e.preventDefault();
-        const lead = {
-            ...newLead,
-            id: leads.length + 1,
-            status: newLead.status || 'Novo',
-            created_at: new Date().toISOString()
-        };
-        setLeads([lead, ...leads]);
-        alert('Lead criado com sucesso! (Simulação)');
-        setIsModalOpen(false);
-        setNewLead({
-            name: '',
-            role: '',
-            email: '',
-            phone: '',
-            organization: '',
-            source: 'Cadastro Manual',
-            status: ''
-        });
+        try {
+            if (!supabase) throw new Error('Supabase client not initialized');
+            const dataToInsert = {
+                name: newLead.name,
+                role: newLead.role,
+                email: newLead.email,
+                phone: newLead.phone,
+                source: newLead.source,
+                status: mapUIToDBStatus(newLead.status || 'Novo'),
+            };
+
+            await supabase.from('leads').insert([dataToInsert]);
+
+            queryClient.invalidateQueries({ queryKey: ['leads'] });
+            alert('Lead criado com sucesso!');
+            setIsModalOpen(false);
+            setNewLead({
+                name: '',
+                role: '',
+                email: '',
+                phone: '',
+                organization: '',
+                source: 'Cadastro Manual',
+                status: ''
+            });
+        } catch (error) {
+            console.error('Error creating lead:', error);
+            alert('Falha ao criar lead');
+        }
     };
 
-    const onDragEnd = (result: DropResult) => {
+    const onDragEnd = async (result: DropResult) => {
         const { destination, source, draggableId } = result;
 
         if (!destination) return;
@@ -80,14 +120,16 @@ const LeadsList = () => {
             return;
         }
 
-        const updatedLeads = leads.map(lead => {
-            if (lead.id.toString() === draggableId) {
-                return { ...lead, status: destination.droppableId };
-            }
-            return lead;
-        });
+        const newDbStatus = mapUIToDBStatus(destination.droppableId);
 
-        setLeads(updatedLeads);
+        try {
+            if (!supabase) return;
+            // Optimistic UI update could go here, but doing it simple via invalidate for now
+            await supabase.from('leads').update({ status: newDbStatus }).eq('id', draggableId);
+            queryClient.invalidateQueries({ queryKey: ['leads'] });
+        } catch (error) {
+            console.error("Failed to update status on drop", error);
+        }
     };
 
     const handleAddInColumn = (status: string) => {
@@ -178,7 +220,11 @@ const LeadsList = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
-                                {filteredLeads.map((lead: any) => (
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Carregando leads...</td>
+                                    </tr>
+                                ) : filteredLeads.map((lead: Lead) => (
                                     <tr
                                         key={lead.id}
                                         className="hover:bg-slate-50 transition-colors cursor-pointer"
@@ -208,12 +254,12 @@ const LeadsList = () => {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center text-sm text-slate-700">
                                                 <Building2 size={16} className="mr-2 text-slate-400" />
-                                                {lead.organization}
+                                                -
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}`}>
-                                                {lead.status}
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(mapDBStatusToUI(lead.status))}`}>
+                                                {mapDBStatusToUI(lead.status)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
@@ -232,7 +278,7 @@ const LeadsList = () => {
                             </tbody>
                         </table>
                     </div>
-                    {filteredLeads.length === 0 && (
+                    {!isLoading && filteredLeads.length === 0 && (
                         <div className="p-8 text-center text-slate-500">
                             Nenhum lead encontrado com os filtros atuais.
                         </div>
@@ -253,7 +299,7 @@ const LeadsList = () => {
                                         {status}
                                     </h3>
                                     <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                        {filteredLeads.filter(l => l.status === status).length}
+                                        {filteredLeads.filter(l => mapDBStatusToUI(l.status) === status).length}
                                     </span>
                                 </div>
 
@@ -264,7 +310,9 @@ const LeadsList = () => {
                                             ref={provided.innerRef}
                                             className="bg-slate-100/50 p-3 rounded-xl border border-slate-200/60 space-y-3 min-h-[500px]"
                                         >
-                                            {filteredLeads.filter(l => l.status === status).map((lead: any, index: number) => (
+                                            {isLoading ? (
+                                                <div className="text-center py-4 text-xs text-slate-400">Carregando...</div>
+                                            ) : filteredLeads.filter(l => mapDBStatusToUI(l.status) === status).map((lead: Lead, index: number) => (
                                                 <Draggable key={lead.id.toString()} draggableId={lead.id.toString()} index={index}>
                                                     {(provided, snapshot) => (
                                                         <div
@@ -287,7 +335,7 @@ const LeadsList = () => {
                                                             <h4 className="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition-colors">{lead.name}</h4>
                                                             <div className="flex items-center text-[11px] text-slate-500 mb-4">
                                                                 <Building2 size={12} className="mr-1 text-slate-400" />
-                                                                <span className="truncate">{lead.organization}</span>
+                                                                <span className="truncate">-</span>
                                                             </div>
 
                                                             <div className="pt-3 border-t border-slate-50 flex items-center justify-between">
@@ -427,19 +475,24 @@ const LeadsList = () => {
                             <div className="ml-4">
                                 <h4 className="text-lg font-bold text-slate-900">{selectedLead.name}</h4>
                                 <p className="text-sm text-slate-500">{selectedLead.role}</p>
-                                <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(selectedLead.status)} uppercase tracking-wider`}>
-                                    {selectedLead.status}
+                                <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(mapDBStatusToUI(selectedLead.status))} uppercase tracking-wider`}>
+                                    {mapDBStatusToUI(selectedLead.status)}
                                 </span>
                             </div>
                         </div>
 
                         {/* Actions */}
                         <div className="grid grid-cols-2 gap-3">
-                            <a href={`mailto:${selectedLead.email}`} className="flex items-center justify-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
+                            <a href={`mailto:${selectedLead.email}`} className="flex items-center justify-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors font-medium">
                                 <Mail size={18} className="mr-2 text-brand-600" /> Email
                             </a>
-                            <a href={`tel:${selectedLead.phone}`} className="flex items-center justify-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
-                                <Phone size={18} className="mr-2 text-brand-600" /> Ligar
+                            <a
+                                href={`https://wa.me/${selectedLead.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center p-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors font-medium"
+                            >
+                                <MessageSquare size={18} className="mr-2 text-green-600" /> WhatsApp
                             </a>
                         </div>
 
@@ -452,7 +505,7 @@ const LeadsList = () => {
                                         <Building2 size={18} className="text-slate-400 mt-0.5 mr-3" />
                                         <div>
                                             <p className="text-xs text-slate-500 font-medium">Organização</p>
-                                            <p className="text-sm text-slate-900 font-semibold">{selectedLead.organization}</p>
+                                            <p className="text-sm text-slate-900 font-semibold">-</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start">
@@ -466,7 +519,9 @@ const LeadsList = () => {
                                         <Calendar size={18} className="text-slate-400 mt-0.5 mr-3" />
                                         <div>
                                             <p className="text-xs text-slate-500 font-medium">Data de Cadastro</p>
-                                            <p className="text-sm text-slate-900">18/02/2026</p>
+                                            <p className="text-sm text-slate-900">
+                                                {new Date(selectedLead.created_at).toLocaleDateString()}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

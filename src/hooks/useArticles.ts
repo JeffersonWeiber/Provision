@@ -1,35 +1,40 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { MOCK_ARTICLES } from '../data/mocks';
 
 export interface Article {
     id: string;
     title: string;
-    date: string;
+    slug: string;
     category: string;
     summary: string;
     author: string;
-    image: string;
+    featured_image?: string;
     content?: string;
+    status: 'draft' | 'published';
+    meta_title?: string;
+    meta_description?: string;
+    keywords?: string;
+    created_at: string;
+    published_at?: string;
 }
 
 export const useArticles = () => {
     return useQuery({
         queryKey: ['articles'],
         queryFn: async () => {
-            if (!supabase) return MOCK_ARTICLES;
+            if (!supabase) throw new Error('Supabase client not initialized');
 
             const { data, error } = await supabase
                 .from('articles')
                 .select('*')
-                .order('date', { ascending: false });
+                .order('created_at', { ascending: false });
 
             if (error) {
                 console.error('Error fetching articles:', error);
-                return MOCK_ARTICLES;
+                throw error;
             }
 
-            return data && data.length > 0 ? data : MOCK_ARTICLES;
+            return (data || []) as Article[];
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
@@ -40,7 +45,7 @@ export const useArticle = (id: string | undefined) => {
         queryKey: ['article', id],
         queryFn: async () => {
             if (!id) return null;
-            if (!supabase) return MOCK_ARTICLES.find(a => a.id === id) || null;
+            if (!supabase) throw new Error('Supabase client not initialized');
 
             const { data, error } = await supabase
                 .from('articles')
@@ -50,12 +55,37 @@ export const useArticle = (id: string | undefined) => {
 
             if (error) {
                 console.error(`Error fetching article ${id}:`, error);
-                return MOCK_ARTICLES.find(a => a.id === id) || null;
+                throw error;
             }
 
-            return data || MOCK_ARTICLES.find(a => a.id === id) || null;
+            return (data || null) as Article | null;
         },
         enabled: !!id,
-        staleTime: 1000 * 60 * 10, // 10 minutes
+        staleTime: 1000 * 60 * 10,
+    });
+};
+
+export const useArticleBySlug = (slug: string | undefined) => {
+    return useQuery({
+        queryKey: ['article-slug', slug],
+        queryFn: async () => {
+            if (!slug) return null;
+            if (!supabase) throw new Error('Supabase client not initialized');
+
+            const { data, error } = await supabase
+                .from('articles')
+                .select('*')
+                .eq('slug', slug)
+                .single();
+
+            if (error) {
+                console.error(`Error fetching article by slug "${slug}":`, error);
+                throw error;
+            }
+
+            return (data || null) as Article | null;
+        },
+        enabled: !!slug,
+        staleTime: 1000 * 60 * 10,
     });
 };

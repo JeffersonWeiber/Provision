@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import PublicLayout from './components/layout/PublicLayout';
 import AdminLayout from './components/admin/AdminLayout';
 import ProtectedRoute from './components/admin/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -36,55 +37,68 @@ const EnrollmentsList = lazy(() => import('./pages/admin/enrollments/List'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
 const AdminArticlesList = lazy(() => import('./pages/admin/articles/List'));
 const ArticleEditor = lazy(() => import('./pages/admin/articles/Editor'));
+const Login = lazy(() => import('./pages/admin/auth/Login'));
 
 import TrackingScripts from './components/TrackingScripts';
+import { useAuthStore } from './store/useAuthStore';
+import { useEffect } from 'react';
 
 // Loading Component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-vh-100 bg-provision-dark/5">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-provision-blue"></div>
+  <div className="flex items-center justify-center min-h-screen bg-slate-50">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
   </div>
 );
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <HelmetProvider>
-        <Router>
-          <TrackingScripts />
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              <Route path="/" element={<PublicLayout />}>
-                <Route index element={<Home />} />
-                <Route path="sobre" element={<About />} />
-                <Route path="consultoria" element={<Consulting />} />
-                <Route path="cursos" element={<Courses />} />
-                <Route path="cursos/:id" element={<CourseDetail />} />
-                <Route path="blog" element={<BlogList />} />
-                <Route path="blog/:slug" element={<BlogDetail />} />
-                <Route path="contato" element={<Contact />} />
-              </Route>
+  const initializeAuth = useAuthStore((state) => state.initialize);
 
-              <Route path="/admin" element={<ProtectedRoute />}>
-                <Route element={<AdminLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="leads" element={<LeadsList />} />
-                  <Route path="organizations" element={<OrganizationsList />} />
-                  <Route path="products" element={<AdminCoursesList />} />
-                  <Route path="enrollments" element={<EnrollmentsList />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="articles" element={<AdminArticlesList />} />
-                  <Route path="articles/new" element={<ArticleEditor />} />
-                  <Route path="articles/:id" element={<ArticleEditor />} />
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <HelmetProvider>
+          <Router>
+            <TrackingScripts />
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<PublicLayout />}>
+                  <Route index element={<Home />} />
+                  <Route path="sobre" element={<About />} />
+                  <Route path="consultoria" element={<Consulting />} />
+                  <Route path="cursos" element={<Courses />} />
+                  <Route path="cursos/:id" element={<CourseDetail />} />
+                  <Route path="conteudos" element={<BlogList />} />
+                  <Route path="conteudos/:slug" element={<BlogDetail />} />
+                  <Route path="contato" element={<Contact />} />
                 </Route>
-              </Route>
-            </Routes>
-          </Suspense>
-        </Router>
-      </HelmetProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+
+                <Route path="/admin/login" element={<Login />} />
+
+                <Route path="/admin" element={<ProtectedRoute />}>
+                  <Route element={<AdminLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="leads" element={<LeadsList />} />
+                    <Route path="organizations" element={<OrganizationsList />} />
+                    <Route path="products" element={<AdminCoursesList />} />
+                    <Route path="enrollments" element={<EnrollmentsList />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="articles" element={<AdminArticlesList />} />
+                    <Route path="articles/new" element={<ArticleEditor />} />
+                    <Route path="articles/:id" element={<ArticleEditor />} />
+                  </Route>
+                </Route>
+              </Routes>
+            </Suspense>
+          </Router>
+        </HelmetProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

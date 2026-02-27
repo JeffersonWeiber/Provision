@@ -11,11 +11,21 @@ import {
     FileText
 } from 'lucide-react';
 import { useState } from 'react';
-import Logo from '../../assets/Ativo 2.svg';
+import Logo from '../../assets/logo-provision.svg';
+
+import { useAuthStore } from '../../store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
 const AdminLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useAuthStore();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/admin/login');
+    };
 
     const menuItems = [
         { path: '/admin/dashboard', name: 'Dashboard', icon: LayoutDashboard },
@@ -28,6 +38,10 @@ const AdminLayout = () => {
     ];
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+    // Get initials for avatar
+    const userInitials = user?.email?.substring(0, 2).toUpperCase() || 'AD';
+    const userEmail = user?.email || 'admin@provision.com.br';
 
     return (
         <div className="flex h-screen bg-slate-100">
@@ -43,7 +57,7 @@ const AdminLayout = () => {
                 md:translate-x-0 flex flex-col
             `}>
                 <div className="h-16 flex items-center px-6 border-b border-slate-800">
-                    <img src={Logo} alt="Admin Logo" className="h-8 w-auto brightness-0 invert" />
+                    <img src={Logo} alt="Admin Logo" className="h-8 w-auto" />
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
@@ -67,17 +81,20 @@ const AdminLayout = () => {
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                    >
                         <LogOut size={20} className="mr-3" />
                         Sair
                     </button>
                     <div className="mt-4 px-4 flex items-center">
                         <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-xs font-bold">
-                            AD
+                            {userInitials}
                         </div>
                         <div className="ml-3">
-                            <p className="text-sm font-medium text-white">Admin</p>
-                            <p className="text-xs text-slate-500">admin@provision.com</p>
+                            <p className="text-sm font-medium text-white max-w-[140px] truncate" title={userEmail}>Admin</p>
+                            <p className="text-xs text-slate-500 max-w-[140px] truncate" title={userEmail}>{userEmail}</p>
                         </div>
                     </div>
                 </div>

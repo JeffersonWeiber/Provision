@@ -1,17 +1,22 @@
 import { useState } from 'react';
-import { MOCK_ORGANIZATIONS } from '../../../data/mocks';
+import type { Organization } from '../../../hooks/useOrganizations';
+import { useOrganizations } from '../../../hooks/useOrganizations';
+import { supabase } from '../../../lib/supabase';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, Building2, MapPin, MoreVertical, Plus, FileText, Globe, Mail, Settings } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import Drawer from '../../../components/ui/Drawer';
 
 const OrganizationsList = () => {
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrg, setSelectedOrg] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'geral' | 'membros' | 'historico' | 'config'>('geral');
-    const [orgs, setOrgs] = useState<any[]>(MOCK_ORGANIZATIONS);
+
+    const { data: orgs = [], isLoading } = useOrganizations();
 
     // Form State
     const [newOrg, setNewOrg] = useState({
@@ -23,47 +28,72 @@ const OrganizationsList = () => {
         contact_email: ''
     });
 
-    const filteredOrgs = orgs.filter((org: any) => {
-        return org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            org.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            org.cnpj.includes(searchTerm);
+    const filteredOrgs = orgs.filter((org: Organization) => {
+        return (org.nomeFantasia && org.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (org.municipio && org.municipio.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (org.cnpj && org.cnpj.includes(searchTerm));
     });
 
-    const handleCreateOrg = (e: React.FormEvent) => {
+    const handleCreateOrg = async (e: React.FormEvent) => {
         e.preventDefault();
-        const org = {
-            ...newOrg,
-            id: orgs.length + 1,
-            status: 'Ativo',
-            contacts: 0
-        };
-        setOrgs([org, ...orgs]);
-        alert('Organização criada com sucesso! (Simulação)');
-        setIsModalOpen(false);
-        setNewOrg({
-            name: '',
-            cnpj: '',
-            type: 'prefeitura',
-            city: '',
-            state: '',
-            contact_email: ''
-        });
+        try {
+            if (!supabase) throw new Error('Supabase client not initialized');
+
+            const dataToInsert = {
+                cnpj: newOrg.cnpj,
+                nomeFantasia: newOrg.name, // Mapping UI name to DB nomeFantasia
+                municipio: newOrg.city,
+                uf: newOrg.state,
+                email: newOrg.contact_email,
+                // other default fields like 'nomeRazaosocial' and 'status' can be handled as needed
+            };
+
+            await supabase.from('organizations').insert([dataToInsert]);
+            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+            alert('Organização criada com sucesso!');
+            setIsModalOpen(false);
+            setNewOrg({
+                name: '',
+                cnpj: '',
+                type: 'prefeitura',
+                city: '',
+                state: '',
+                contact_email: ''
+            });
+        } catch (error) {
+            console.error("Error creating organization", error);
+            alert("Erro ao criar organização.");
+        }
     };
 
-    const handleUpdateOrg = (e: React.FormEvent) => {
+    const handleUpdateOrg = async (e: React.FormEvent) => {
         e.preventDefault();
-        const updatedOrgs = orgs.map(o => o.id === selectedOrg.id ? { ...selectedOrg } : o);
-        setOrgs(updatedOrgs);
-        alert('Dados atualizados com sucesso! (Simulação)');
-        setIsEditModalOpen(false);
+        try {
+            if (!supabase) throw new Error('Supabase client not initialized');
+
+            const dataToUpdate = {
+                cnpj: selectedOrg.cnpj,
+                nomeFantasia: selectedOrg.name,
+                municipio: selectedOrg.city,
+                uf: selectedOrg.state,
+                email: selectedOrg.contact_email,
+            };
+
+            await supabase.from('organizations').update(dataToUpdate).eq('id', selectedOrg.id);
+            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+
+            alert('Dados atualizados com sucesso!');
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error("Error updating organization", error);
+            alert("Erro ao atualizar organização.");
+        }
     };
 
-    const handleToggleOrgStatus = () => {
-        const newStatus = selectedOrg.status === 'Ativo' ? 'Inativo' : 'Ativo';
-        const updatedOrgs = orgs.map(o => o.id === selectedOrg.id ? { ...o, status: newStatus } : o);
-        setOrgs(updatedOrgs);
-        setSelectedOrg({ ...selectedOrg, status: newStatus });
-        alert(`Organização ${newStatus === 'Ativo' ? 'ativada' : 'desativada'} com sucesso!`);
+    const handleToggleOrgStatus = async () => {
+        // Implement status toggle logically depending on if `status` field exists in your actual db schema. 
+        // For now simulating a local update if status doesn't exist.
+        alert(`Recurso de status em desenvolvimento`);
     };
 
     const openOrgDetails = (org: any) => {
@@ -102,43 +132,48 @@ const OrganizationsList = () => {
                 </div>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredOrgs.map((org: any) => (
-                    <div
-                        key={org.id}
-                        className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all cursor-pointer hover:-translate-y-1"
-                        onClick={() => openOrgDetails(org)}
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
-                                <Building2 size={24} />
+            {isLoading ? (
+                <div className="p-12 text-center text-slate-500">
+                    Carregando organizações...
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredOrgs.map((org: Organization) => (
+                        <div
+                            key={org.id}
+                            className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all cursor-pointer hover:-translate-y-1"
+                            onClick={() => openOrgDetails(org)}
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                                    <Building2 size={24} />
+                                </div>
+                                <button className="text-slate-400 hover:text-brand-600">
+                                    <MoreVertical size={20} />
+                                </button>
                             </div>
-                            <button className="text-slate-400 hover:text-brand-600">
-                                <MoreVertical size={20} />
-                            </button>
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-900 mb-1">{org.name}</h3>
-                        <p className="text-sm text-slate-500 mb-4">CNPJ: {org.cnpj}</p>
+                            <h3 className="text-lg font-bold text-slate-900 mb-1">{org.nomeFantasia}</h3>
+                            <p className="text-sm text-slate-500 mb-4">CNPJ: {org.cnpj}</p>
 
-                        <div className="flex items-center text-sm text-slate-600 mb-2">
-                            <MapPin size={16} className="mr-2 text-slate-400" />
-                            {org.city} - {org.state}
-                        </div>
+                            <div className="flex items-center text-sm text-slate-600 mb-2">
+                                <MapPin size={16} className="mr-2 text-slate-400" />
+                                {org.municipio} - {org.uf}
+                            </div>
 
-                        <div className="pt-4 border-t border-slate-100 flex justify-between items-center mt-4">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${org.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {org.status}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                                {org.contacts} contatos
-                            </span>
+                            <div className="pt-4 border-t border-slate-100 flex justify-between items-center mt-4">
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800`}>
+                                    Ativo
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                    0 contatos
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
-            {filteredOrgs.length === 0 && (
+            {!isLoading && filteredOrgs.length === 0 && (
                 <div className="p-12 text-center bg-white rounded-xl border border-slate-200 text-slate-500">
                     Nenhuma organização encontrada.
                 </div>
@@ -268,10 +303,10 @@ const OrganizationsList = () => {
                                 <Building2 size={32} />
                             </div>
                             <div className="ml-4">
-                                <h4 className="text-lg font-bold text-slate-900">{selectedOrg.name}</h4>
+                                <h4 className="text-lg font-bold text-slate-900">{selectedOrg.nomeFantasia}</h4>
                                 <p className="text-sm text-slate-500">CNPJ: {selectedOrg.cnpj}</p>
-                                <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${selectedOrg.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} uppercase tracking-wider`}>
-                                    {selectedOrg.status}
+                                <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-green-100 text-green-800 uppercase tracking-wider`}>
+                                    Ativo
                                 </span>
                             </div>
                         </div>
@@ -312,7 +347,7 @@ const OrganizationsList = () => {
                                         <MapPin size={20} className="text-brand-600 mr-3 mt-1" />
                                         <div>
                                             <h6 className="text-sm font-bold text-brand-900">Localização Principal</h6>
-                                            <p className="text-sm text-brand-800 font-medium">{selectedOrg.city} - {selectedOrg.state}</p>
+                                            <p className="text-sm text-brand-800 font-medium">{selectedOrg.municipio} - {selectedOrg.uf}</p>
                                         </div>
                                     </div>
 
@@ -322,12 +357,12 @@ const OrganizationsList = () => {
                                             <div className="flex items-center text-sm">
                                                 <Mail size={16} className="text-slate-400 mr-3" />
                                                 <span className="text-slate-600 font-medium">Email:</span>
-                                                <span className="ml-auto text-slate-900 font-bold">{selectedOrg.contact_email || 'contato@' + selectedOrg.name.toLowerCase().split(' ').join('') + '.gov.br'}</span>
+                                                <span className="ml-auto text-slate-900 font-bold">{selectedOrg.email || 'contato@' + (selectedOrg.nomeFantasia || '').toLowerCase().split(' ').join('') + '.gov.br'}</span>
                                             </div>
                                             <div className="flex items-center text-sm">
                                                 <Globe size={16} className="text-slate-400 mr-3" />
                                                 <span className="text-slate-600 font-medium">Website:</span>
-                                                <span className="ml-auto text-brand-600 underline text-xs">www.{selectedOrg.name.toLowerCase().split(' ').join('')}.gov.br</span>
+                                                <span className="ml-auto text-brand-600 underline text-xs">www.{(selectedOrg.nomeFantasia || '').toLowerCase().split(' ').join('')}.gov.br</span>
                                             </div>
                                         </div>
                                     </div>
@@ -356,7 +391,7 @@ const OrganizationsList = () => {
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Membros da Organização</h5>
-                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600">{selectedOrg.contacts} Total</span>
+                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600">0 Total</span>
                                     </div>
                                     <div className="space-y-3">
                                         {[1, 2, 3].map((i) => (

@@ -1,6 +1,11 @@
 import { MessageCircle } from 'lucide-react';
+import { useSettings } from '../../hooks/useSettings';
 
 const ConsultingCTA = () => {
+  const { data: settings } = useSettings();
+  const whatsappNumber = settings?.contact_whatsapp || '5545999999999';
+  const whatsappLink = `https://wa.me/${whatsappNumber}`;
+
   return (
     <section className="py-20 bg-brand-900 relative overflow-hidden">
       {/* Decorative background elements */}
@@ -17,7 +22,7 @@ const ConsultingCTA = () => {
 
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <a
-            href="https://wa.me/5545999999999"
+            href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center bg-[#25D366] hover:bg-[#128C7E] text-white px-8 py-4 rounded-lg text-lg font-bold transition-all shadow-lg hover:shadow-[#25d366]/30"

@@ -1,9 +1,22 @@
 import { useState } from 'react';
 import PageHeader from '../components/ui/PageHeader';
 import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
+import { maskPhone } from '../utils/masks';
+import { useAddLead } from '../hooks/useLeads';
+import { useSettings } from '../hooks/useSettings';
 
 const Contact = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const { data: settings } = useSettings();
+    const addLeadMutation = useAddLead();
+
+    const contactEmail = settings?.contact_email || 'contato@provision.com.br';
+    const contactPhone = settings?.contact_whatsapp || '45999184518';
+    const formattedPhone = contactPhone.length > 10
+        ? `(${contactPhone.slice(2, 4)}) ${contactPhone.slice(4, 9)}-${contactPhone.slice(9)}`
+        : contactPhone;
+
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -14,11 +27,28 @@ const Contact = () => {
         lgpd: false
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Lead capturado:', formData);
-        setIsSubmitted(true);
-        // Em uma implementação real, aqui faríamos o fetch para a API/Supabase
+        setStatus('loading');
+
+        addLeadMutation.mutate({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            organization_name: formData.org,
+            role_title: formData.role,
+            lgpd_consent: formData.lgpd,
+            source: 'Formulário Contato',
+        }, {
+            onSuccess: () => {
+                setStatus('success');
+                setIsSubmitted(true);
+            },
+            onError: (error) => {
+                console.error('Contact form error:', error);
+                setStatus('error');
+            }
+        });
     };
 
     if (isSubmitted) {
@@ -75,7 +105,7 @@ const Contact = () => {
                                     </div>
                                     <div className="ml-6">
                                         <h3 className="text-lg font-bold text-slate-900">Telefone / WhatsApp</h3>
-                                        <p className="text-slate-600 mt-1">(45) 99999-9999</p>
+                                        <p className="text-slate-600 mt-1">{formattedPhone}</p>
                                         <p className="text-slate-500 text-sm">Segunda a Sexta, das 08:00 às 18:00</p>
                                     </div>
                                 </div>
@@ -86,8 +116,7 @@ const Contact = () => {
                                     </div>
                                     <div className="ml-6">
                                         <h3 className="text-lg font-bold text-slate-900">Email</h3>
-                                        <p className="text-slate-600 mt-1">contato@provision.com.br</p>
-                                        <p className="text-slate-600">comercial@provision.com.br</p>
+                                        <p className="text-slate-600 mt-1">{contactEmail}</p>
                                     </div>
                                 </div>
 
@@ -98,9 +127,7 @@ const Contact = () => {
                                     <div className="ml-6">
                                         <h3 className="text-lg font-bold text-slate-900">Sede Administrativa</h3>
                                         <p className="text-slate-600 mt-1">
-                                            Rua Exemplo, 1234, Centro<br />
                                             Toledo - Paraná<br />
-                                            CEP 85900-000
                                         </p>
                                     </div>
                                 </div>
@@ -132,7 +159,7 @@ const Contact = () => {
                                             className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                             placeholder="(00) 00000-0000"
                                             value={formData.phone}
-                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
                                         />
                                     </div>
                                 </div>
@@ -204,10 +231,23 @@ const Contact = () => {
                                     </label>
                                 </div>
 
-                                <button type="submit" className="w-full flex items-center justify-center bg-brand-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200">
-                                    <Send size={20} className="mr-2" />
-                                    Enviar Mensagem
+                                <button
+                                    type="submit"
+                                    disabled={status === 'loading'}
+                                    className="w-full flex items-center justify-center bg-brand-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 disabled:opacity-50"
+                                >
+                                    {status === 'loading' ? (
+                                        <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                                    ) : (
+                                        <Send size={20} className="mr-2" />
+                                    )}
+                                    {status === 'loading' ? 'Enviando...' : 'Enviar Mensagem'}
                                 </button>
+                                {status === 'error' && (
+                                    <p className="text-center text-red-500 font-bold mt-4 animate-bounce">
+                                        Ocorreu um erro ao enviar sua mensagem. Por favor, tente novamente via WhatsApp.
+                                    </p>
+                                )}
                             </form>
                         </div>
                     </div>

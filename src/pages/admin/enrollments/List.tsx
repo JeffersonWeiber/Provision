@@ -1,21 +1,33 @@
 import { useState } from 'react';
-import { MOCK_ENROLLMENTS } from '../../../data/mocks';
+import type { Enrollment } from '../../../hooks/useEnrollments';
+import { useEnrollments } from '../../../hooks/useEnrollments';
 import { Search, GraduationCap, CheckCircle, XCircle, Clock, MoreVertical } from 'lucide-react';
 
 const EnrollmentsList = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const { data: enrollments = [], isLoading } = useEnrollments();
 
-    const filtered = MOCK_ENROLLMENTS.filter((item: any) => {
-        return item.course_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.lead_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const filtered = enrollments.filter((item: Enrollment) => {
+        const courseTitle = item.product?.title || '';
+        const leadName = item.lead?.name || '';
+
+        return courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            leadName.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
     const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'Confirmado': return <CheckCircle size={16} className="text-green-500" />;
-            case 'Cancelado': return <XCircle size={16} className="text-red-500" />;
-            default: return <Clock size={16} className="text-orange-500" />;
-        }
+        if (status === 'confirmed') return <CheckCircle size={16} className="text-green-500" />;
+        if (status === 'cancelled') return <XCircle size={16} className="text-red-500" />;
+        return <Clock size={16} className="text-orange-500" />;
+    };
+
+    const translateStatus = (status: string) => {
+        const map: Record<string, string> = {
+            'confirmed': 'Confirmado',
+            'cancelled': 'Cancelado',
+            'pending': 'Pendente'
+        };
+        return map[status] || status;
     };
 
     return (
@@ -54,24 +66,28 @@ const EnrollmentsList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
-                            {filtered.map((item: any) => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">Carregando matrículas...</td>
+                                </tr>
+                            ) : filtered.map((item: Enrollment) => (
                                 <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                                        {item.lead_name}
+                                        {item.lead?.name || 'Lead Desconhecido'}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                         <div className="flex items-center">
                                             <GraduationCap size={16} className="mr-2 text-slate-400" />
-                                            {item.course_title}
+                                            {item.product?.title || 'Curso Desconhecido'}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-500">
-                                        {item.date}
+                                        {new Date(item.created_at).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
                                             {getStatusIcon(item.status)}
-                                            <span className="text-sm text-slate-700">{item.status}</span>
+                                            <span className="text-sm text-slate-700">{translateStatus(item.status)}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -84,6 +100,11 @@ const EnrollmentsList = () => {
                         </tbody>
                     </table>
                 </div>
+                {!isLoading && filtered.length === 0 && (
+                    <div className="p-8 text-center text-slate-500 border-t border-slate-200">
+                        Nenhuma matrícula encontrada.
+                    </div>
+                )}
             </div>
         </div>
     );

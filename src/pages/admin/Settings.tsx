@@ -87,7 +87,7 @@ const Settings = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <SettingsIcon className="text-brand-600" size={28} />
-                        Configurações do Systema
+                        Configurações do Sistema
                     </h1>
                     <p className="text-slate-500 text-sm">Gerencie as informações institucionais e regulatórias do site.</p>
                 </div>

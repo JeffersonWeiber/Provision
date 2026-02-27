@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import Logo from '../../assets/Ativo 2.svg';
+import Logo from '../../assets/logo-provision.svg';
 import { Link } from 'react-router-dom';
+import { useSettings } from '../../hooks/useSettings';
 
 const Header = () => {
+    const { data: settings } = useSettings();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const whatsappNumber = settings?.contact_whatsapp || '5545999184518';
+    const whatsappLink = `https://wa.me/${whatsappNumber}`;
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -13,6 +18,7 @@ const Header = () => {
         { name: 'A Provision', path: '/sobre' },
         { name: 'Consultoria', path: '/consultoria' },
         { name: 'Cursos', path: '/cursos' },
+        { name: 'Conteúdos', path: '/conteudos' },
         { name: 'Contato', path: '/contato' },
     ];
 
@@ -36,7 +42,7 @@ const Header = () => {
                         <Link to="/conteudos" className="text-slate-600 hover:text-brand-600 font-medium transition-colors">Conteúdos</Link>
                         <Link to="/contato" className="text-slate-600 hover:text-brand-600 font-medium transition-colors">Contato</Link>
                         <a
-                            href="https://wa.me/5545999999999" // Placeholder WhatsApp
+                            href={whatsappLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-brand-600 text-white px-5 py-2.5 rounded-md font-semibold hover:bg-brand-700 transition-colors shadow-md"
@@ -72,7 +78,7 @@ const Header = () => {
                             </Link>
                         ))}
                         <a
-                            href="https://wa.me/5545999999999"
+                            href={whatsappLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full text-center mt-4 bg-brand-600 text-white px-5 py-3 rounded-md font-semibold hover:bg-brand-700 transition-colors"

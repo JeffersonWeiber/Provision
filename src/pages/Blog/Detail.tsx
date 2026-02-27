@@ -1,11 +1,24 @@
 import SEO from '../../components/SEO';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Tag } from 'lucide-react';
-import { useArticle } from '../../hooks/useArticles';
+import { ArrowLeft, User, Calendar } from 'lucide-react';
+import { useArticleBySlug } from '../../hooks/useArticles';
+import { marked } from 'marked';
+import { useMemo, useState } from 'react';
 
 const BlogDetail = () => {
     const { slug } = useParams();
-    const { data: article, isLoading } = useArticle(slug);
+    const { data: article, isLoading } = useArticleBySlug(slug);
+    const [imgError, setImgError] = useState(false);
+
+    // Parse markdown content to HTML (also handle stored \\n literal strings)
+    const parsedContent = useMemo(() => {
+        if (!article?.content) return null;
+        // Unescape literal \n sequences stored as strings in the DB
+        const unescaped = article.content
+            .replace(/\\n/g, '\n')
+            .replace(/\\t/g, '\t');
+        return marked.parse(unescaped, { breaks: true }) as string;
+    }, [article?.content]);
 
     if (isLoading) {
         return (
@@ -19,7 +32,7 @@ const BlogDetail = () => {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center">
                 <h2 className="text-2xl font-bold mb-4">Artigo não encontrado</h2>
-                <Link to="/blog" className="text-brand-600 font-bold hover:underline flex items-center">
+                <Link to="/conteudos" className="text-brand-600 font-bold hover:underline flex items-center">
                     <ArrowLeft size={18} className="mr-2" /> Voltar para o Blog
                 </Link>
             </div>
@@ -32,39 +45,59 @@ const BlogDetail = () => {
                 title={article.title}
                 description={article.summary}
             />
-            <div className="bg-slate-900 py-20 px-4">
-                <div className="container mx-auto max-w-4xl text-center">
-                    <Link to="/blog" className="inline-flex items-center text-brand-400 font-bold mb-8 hover:text-brand-300 transition-colors">
-                        <ArrowLeft size={18} className="mr-2" /> Voltar para o Blog
-                    </Link>
-                    <h1 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
-                        Detalhe do Artigo: {slug}
+            {/* Header */}
+            <div className="bg-white border-b border-slate-200 py-12">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+                    <span className="inline-block px-3 py-1 bg-brand-50 text-brand-700 font-bold text-xs uppercase tracking-wider rounded-full">
+                        {article.category}
+                    </span>
+                    <h1 className="text-3xl md:text-5xl font-bold text-slate-900 leading-tight">
+                        {article.title}
                     </h1>
-                    <div className="flex flex-wrap items-center justify-center gap-6 text-slate-400 text-sm">
-                        <span className="flex items-center gap-2"><User size={16} /> Dr. Roberto Silva</span>
-                        <span className="flex items-center gap-2"><Calendar size={16} /> 12 de Fevereiro, 2026</span>
-                        <span className="flex items-center gap-2"><Tag size={16} /> Tributário</span>
+                    <div className="flex items-center justify-center gap-6 text-sm text-slate-500">
+                        <span className="flex items-center gap-2"><User size={16} /> {article.author}</span>
+                        <span className="flex items-center gap-2"><Calendar size={16} /> {new Date(article.published_at || article.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                 </div>
             </div>
 
-            <article className="container mx-auto max-w-4xl py-16 px-4">
-                <div className="prose prose-slate lg:prose-xl mx-auto">
-                    <p className="text-xl text-slate-600 leading-relaxed mb-8 italic border-l-4 border-brand-500 pl-6">
-                        Este é um conteúdo preparado para demonstração. Em breve, os artigos reais serão exibidos aqui com toda a riqueza técnica necessária para a gestão pública.
-                    </p>
-                    <p>
-                        A Provision está comprometida em trazer as melhores atualizações normativas e conteúdos técnicos para auxiliar gestores municipais em todo o Brasil.
-                    </p>
-                    <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 my-12">
-                        <h3 className="text-xl font-bold mb-4">Aviso Técnico</h3>
-                        <p className="text-sm text-slate-500">
-                            Nossas atualizações normativas seguem os padrões do TCE e TCU, garantindo conformidade legal em todas as orientações prestadas.
-                        </p>
+            {/* Content */}
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <article className="prose prose-slate prose-lg max-w-none">
+                    {/* Featured Image — only show if URL is valid and loads successfully */}
+                    {article.featured_image && !imgError && (
+                        <div className="mb-12 rounded-2xl overflow-hidden shadow-lg border border-slate-100">
+                            <img src={article.featured_image} alt={article.title} onError={() => setImgError(true)} className="w-full h-auto object-cover max-h-[500px]" />
+                        </div>
+                    )}
+
+                    <div className="text-xl text-slate-600 leading-relaxed mb-8 italic border-l-4 border-brand-500 pl-6">
+                        {article.summary}
                     </div>
-                </div>
-            </article>
-        </div >
+
+                    {/* Content rendering: parsed Markdown as HTML */}
+                    {parsedContent ? (
+                        <div
+                            dangerouslySetInnerHTML={{ __html: parsedContent }}
+                            className="prose prose-slate prose-lg max-w-none
+                                       prose-headings:font-bold prose-headings:text-slate-900
+                                       prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
+                                       prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+                                       prose-p:leading-relaxed prose-p:text-slate-700
+                                       prose-strong:text-slate-900 prose-strong:font-bold
+                                       prose-ul:list-disc prose-ul:pl-6
+                                       prose-ol:list-decimal prose-ol:pl-6
+                                       prose-li:text-slate-700 prose-li:mb-1
+                                       prose-blockquote:border-l-4 prose-blockquote:border-brand-500 prose-blockquote:pl-4 prose-blockquote:italic"
+                        />
+                    ) : (
+                        <p className="text-slate-600">
+                            A Provision está comprometida em trazer as melhores atualizações normativas e conteúdos técnicos para auxiliar gestores municipais em todo o Brasil.
+                        </p>
+                    )}
+                </article>
+            </div>
+        </div>
     );
 };
 
