@@ -2,16 +2,10 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import Logo from '../../assets/logo-provision.svg';
 import { Link } from 'react-router-dom';
-import { useSettings } from '../../hooks/useSettings';
+
 
 const Header = () => {
-    const { data: settings } = useSettings();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-    const whatsappNumber = settings?.contact_whatsapp || '5545999184518';
-    const whatsappLink = `https://wa.me/${whatsappNumber}`;
-
-    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const [isMenuOpen, setIsMenuOpen] = useState(false); const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -41,14 +35,7 @@ const Header = () => {
                         <Link to="/cursos" className="text-slate-600 hover:text-brand-600 font-medium transition-colors">Cursos</Link>
                         <Link to="/conteudos" className="text-slate-600 hover:text-brand-600 font-medium transition-colors">Conteúdos</Link>
                         <Link to="/contato" className="text-slate-600 hover:text-brand-600 font-medium transition-colors">Contato</Link>
-                        <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-brand-600 text-white px-5 py-2.5 rounded-md font-semibold hover:bg-brand-700 transition-colors shadow-md"
-                        >
-                            Falar com Consultor
-                        </a>
+
                     </nav>
 
                     {/* Mobile Menu Button */}
@@ -77,14 +64,7 @@ const Header = () => {
                                 {link.name}
                             </Link>
                         ))}
-                        <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block w-full text-center mt-4 bg-brand-600 text-white px-5 py-3 rounded-md font-semibold hover:bg-brand-700 transition-colors"
-                        >
-                            Falar com Consultor
-                        </a>
+
                     </div>
                 </div>
             )}

@@ -1,5 +1,6 @@
 import PageHeader from '../components/ui/PageHeader';
 import { Target, Eye, Award, CheckCircle } from 'lucide-react';
+import ClientCarousel from '../components/about/ClientCarousel';
 
 const About = () => {
     return (
@@ -94,22 +95,8 @@ const About = () => {
                 </div>
             </section>
 
-            {/* Team Placeholder (Optional for Phase 1) */}
-            <section className="py-20 bg-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-3xl font-bold text-slate-900 mb-12">Quem Faz a Provision</h2>
-                    <div className="max-w-3xl mx-auto bg-slate-50 p-8 rounded-2xl border border-slate-200">
-                        <p className="text-slate-600 italic text-lg">
-                            "Contamos com uma equipe multidisciplinar formada por advogados, contadores e administradores com vasta experiência na gestão pública."
-                        </p>
-                        <div className="mt-6 flex items-center justify-center space-x-4">
-                            <span className="font-bold text-slate-900">Dr. Nome do Fundador</span>
-                            <span className="text-slate-400">•</span>
-                            <span className="text-brand-600">Diretor Técnico</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* Clients Carousel Phase */}
+            <ClientCarousel />
         </div>
     );
 };

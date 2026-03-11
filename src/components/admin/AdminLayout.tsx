@@ -57,7 +57,7 @@ const AdminLayout = () => {
                 md:translate-x-0 flex flex-col
             `}>
                 <div className="h-16 flex items-center px-6 border-b border-slate-800">
-                    <img src={Logo} alt="Admin Logo" className="h-8 w-auto" />
+                    <img src={Logo} alt="Admin Logo" className="h-8 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">

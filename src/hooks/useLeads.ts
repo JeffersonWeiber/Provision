@@ -48,12 +48,13 @@ export const useAddLead = () => {
 
             const { data, error } = await supabase
                 .from('leads')
-                .insert([
+                .upsert(
                     {
                         ...newLead,
                         status: newLead.status || 'new',
                     },
-                ])
+                    { onConflict: 'email' }
+                )
                 .select()
                 .single();
 
@@ -63,6 +64,58 @@ export const useAddLead = () => {
             }
 
             return data as Lead;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['leads'] });
+        },
+    });
+};
+
+export const useUpdateLead = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, ...updates }: Partial<Lead> & { id: string }) => {
+            if (!supabase) throw new Error('Supabase client not initialized');
+
+            const { data, error } = await supabase
+                .from('leads')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error updating lead:', error);
+                throw error;
+            }
+
+            return data as Lead;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['leads'] });
+        },
+    });
+};
+
+export const useDeleteLead = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string) => {
+            if (!supabase) throw new Error('Supabase client not initialized');
+
+            const { error } = await supabase
+                .from('leads')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting lead:', error);
+                throw error;
+            }
+
+            return id;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leads'] });

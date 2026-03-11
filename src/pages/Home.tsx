@@ -1,10 +1,16 @@
 import SEO from '../components/SEO';
+
+import { useSettings } from '../hooks/useSettings';
 import ActionAreas from '../components/home/ActionAreas';
 import UpcomingCourses from '../components/home/UpcomingCourses';
 import NormativeUpdates from '../components/home/NormativeUpdates';
 import ConsultingCTA from '../components/home/ConsultingCTA';
 
 const Home = () => {
+    const { data: settings } = useSettings();
+    const whatsappNumber = settings?.contact_whatsapp || '5545999999999';
+    const whatsappLink = `https://wa.me/${whatsappNumber}?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20os%20serviços%20da%20Provision.`;
+
     return (
         <div className="min-h-screen">
             <SEO
@@ -27,7 +33,7 @@ const Home = () => {
                         <span className="text-brand-300 text-sm font-medium tracking-wide">Excelência em Gestão Pública</span>
                     </div>
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-                        Gestão pública com <br className="hidden lg:block" />
+                        Gestão Pública com <br className="hidden lg:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
                             clareza, técnica e confiança.
                         </span>
@@ -39,8 +45,14 @@ const Home = () => {
                         <a href="/cursos" className="bg-brand-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-brand-500 transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)]">
                             Ver Cursos Disponíveis
                         </a>
-                        <a href="https://wa.me/5545999999999" className="bg-white/5 text-white backdrop-blur-sm border border-white/10 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white/10 transition-colors">
-                            Falar com Consultor
+                        <a
+                            href={whatsappLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-[#25D366] text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-[#128C7E] transition-all shadow-[0_0_20px_rgba(37,211,102,0.3)] hover:shadow-[0_0_30px_rgba(37,211,102,0.5)] flex items-center justify-center gap-2"
+                        >
+                            <img src="https://wyskqemodtuxxnfpxshl.supabase.co/storage/v1/object/public/public-assets/WhatsApp-Logo.wine.svg" alt="WhatsApp" className="w-10 h-10 object-contain" />
+                            Fale no WhatsApp
                         </a>
                     </div>
                 </div>

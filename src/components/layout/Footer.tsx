@@ -55,7 +55,7 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Brand Column */}
                     <div className="col-span-1 md:col-span-1">
-                        <img src={Logo} alt="Provision Logo" className="h-8 w-auto mb-4" />
+                        <img src={Logo} alt="Provision Logo" className="h-8 w-auto mb-4" style={{ filter: 'brightness(0) invert(1)' }} />
                         <p className="text-sm leading-relaxed mb-4">
                             {settings?.site_description || 'Soluções técnicas especializadas para uma gestão pública segura, eficiente e transparente.'}
                         </p>

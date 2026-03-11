@@ -5,7 +5,8 @@ import { supabase } from '../../../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search, BookOpen, Calendar, MapPin, MoreVertical, Plus, UploadCloud, FileText } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
-import { maskDate, maskCurrency } from '../../../utils/masks';
+import DateRangePicker from '../../../components/ui/DateRangePicker';
+import { maskCurrency } from '../../../utils/masks';
 
 const AdminCoursesList = () => {
     const queryClient = useQueryClient();
@@ -333,6 +334,7 @@ const AdminCoursesList = () => {
                                 <option value="Presencial">Presencial</option>
                                 <option value="Online">Online</option>
                                 <option value="Hibrido">Híbrido</option>
+                                <option value="Treinamento In Company">Treinamento In Company</option>
                             </select>
                         </div>
                         <div className="space-y-1">
@@ -360,22 +362,18 @@ const AdminCoursesList = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-slate-700">Data</label>
-                            <input
-                                type="text"
-                                required
-                                placeholder="Ex: 25/03/2026"
-                                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
+                            <label className="text-sm font-medium text-slate-700">Data ou Período</label>
+                            <DateRangePicker
                                 value={courseForm.date}
-                                onChange={(e) => setCourseForm({ ...courseForm, date: maskDate(e.target.value) })}
+                                onChange={(v) => setCourseForm({ ...courseForm, date: v })}
+                                placeholder="Selecione a data ou período"
                             />
                         </div>
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-slate-700">Horário</label>
                             <input
-                                type="text"
+                                type="time"
                                 required
-                                placeholder="Ex: 08:30 às 17:30"
                                 className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-brand-500"
                                 value={courseForm.time}
                                 onChange={(e) => setCourseForm({ ...courseForm, time: e.target.value })}

@@ -1,9 +1,11 @@
-import { useState } from 'react';
 import type { Lead } from '../../../hooks/useLeads';
-import { useLeads } from '../../../hooks/useLeads';
+import { useLeads, useUpdateLead, useDeleteLead } from '../../../hooks/useLeads';
+import { useLeadNotes, useAddLeadNote } from '../../../hooks/useLeadNotes';
+import { useLeadActivities, useAddLeadActivity } from '../../../hooks/useLeadActivities';
 import { supabase } from '../../../lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
-import { Search, Filter, MoreVertical, Phone, Mail, Building2, User, Briefcase, Plus, Calendar, Clock, MessageSquare, Tag, LayoutGrid, List as ListIcon } from 'lucide-react';
+import { Search, Filter, MoreVertical, Phone, Mail, Building2, User, Briefcase, Plus, Calendar, Clock, MessageSquare, Tag, LayoutGrid, List as ListIcon, Edit2, Trash2, X, Check } from 'lucide-react';
+import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Drawer from '../../../components/ui/Drawer';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -18,7 +20,20 @@ const LeadsList = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
 
+    const [isEditingLead, setIsEditingLead] = useState(false);
+    const [editingLeadData, setEditingLeadData] = useState<Partial<Lead>>({});
+
     const { data: rawLeads = [], isLoading } = useLeads();
+    const { mutateAsync: updateLead, isPending: isUpdatingLead } = useUpdateLead();
+    const { mutateAsync: deleteLead, isPending: isDeletingLead } = useDeleteLead();
+
+    // Notes & Activities
+    const { data: leadNotes = [] } = useLeadNotes(selectedLead?.id);
+    const { mutate: addNote, isPending: isAddingNote } = useAddLeadNote();
+    const { data: leadActivities = [] } = useLeadActivities(selectedLead?.id);
+    const { mutate: addActivity } = useAddLeadActivity();
+
+    const [newNoteContent, setNewNoteContent] = useState('');
 
     const statuses = ['Novo', 'Qualificado', 'Contatado', 'Convertido'];
 
@@ -92,6 +107,8 @@ const LeadsList = () => {
 
             await supabase.from('leads').insert([dataToInsert]);
 
+            // Note: Triggers like `addActivity` are hard to run here easily if you don't fetch the newly created ID, but let's assume it's created and queried naturally on next run.
+
             queryClient.invalidateQueries({ queryKey: ['leads'] });
             alert('Lead criado com sucesso!');
             setIsModalOpen(false);
@@ -128,6 +145,14 @@ const LeadsList = () => {
             if (!supabase) return;
             // Optimistic UI update could go here, but doing it simple via invalidate for now
             await supabase.from('leads').update({ status: newDbStatus }).eq('id', draggableId);
+
+            // Add Activity
+            addActivity({
+                lead_id: draggableId,
+                type: 'status_change',
+                description: `Status alterado de ${mapDBStatusToUI(source.droppableId)} para ${mapDBStatusToUI(destination.droppableId)}`
+            });
+
             queryClient.invalidateQueries({ queryKey: ['leads'] });
         } catch (error) {
             console.error("Failed to update status on drop", error);
@@ -141,7 +166,51 @@ const LeadsList = () => {
 
     const openLeadDetails = (lead: Lead) => {
         setSelectedLead(lead);
+        setEditingLeadData(lead);
+        setIsEditingLead(false);
         setIsDrawerOpen(true);
+    };
+
+    const handleDeleteLead = async () => {
+        if (!selectedLead) return;
+        if (window.confirm('Tem certeza absoluta? Isso apagará o lead e todo o seu histórico, notas e matrículas associadas de forma permanente.')) {
+            try {
+                await deleteLead(selectedLead.id);
+                setIsDrawerOpen(false);
+                setSelectedLead(null);
+            } catch (error) {
+                alert('Erro ao excluir lead.');
+            }
+        }
+    };
+
+    const handleSaveEditLead = async () => {
+        if (!selectedLead || !editingLeadData.name || !editingLeadData.email) return;
+        try {
+            const updated = await updateLead({ id: selectedLead.id, ...editingLeadData });
+            setSelectedLead(updated);
+            setIsEditingLead(false);
+        } catch (error) {
+            alert('Erro ao editar lead.');
+        }
+    };
+
+    const handleAddNote = () => {
+        if (!newNoteContent.trim() || !selectedLead) return;
+
+        addNote({
+            lead_id: selectedLead.id,
+            content: newNoteContent
+        }, {
+            onSuccess: () => {
+                setNewNoteContent('');
+                addActivity({
+                    lead_id: selectedLead.id,
+                    type: 'note_added',
+                    description: `Adicionou uma nova nota.`
+                });
+            }
+        });
     };
 
     return (
@@ -470,16 +539,36 @@ const LeadsList = () => {
                 {selectedLead && (
                     <div className="space-y-8">
                         {/* Header Profile */}
-                        <div className="flex items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="h-16 w-16 rounded-full bg-brand-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                                {selectedLead.name.charAt(0)}
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="flex items-center">
+                                <div className="h-16 w-16 rounded-full bg-brand-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                                    {selectedLead.name.charAt(0)}
+                                </div>
+                                <div className="ml-4">
+                                    <h4 className="text-lg font-bold text-slate-900">{selectedLead.name}</h4>
+                                    <p className="text-sm text-slate-500">{selectedLead.role_title || '-'}</p>
+                                    <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(mapDBStatusToUI(selectedLead.status))} uppercase tracking-wider`}>
+                                        {mapDBStatusToUI(selectedLead.status)}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="ml-4">
-                                <h4 className="text-lg font-bold text-slate-900">{selectedLead.name}</h4>
-                                <p className="text-sm text-slate-500">{selectedLead.role_title}</p>
-                                <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full ${getStatusColor(mapDBStatusToUI(selectedLead.status))} uppercase tracking-wider`}>
-                                    {mapDBStatusToUI(selectedLead.status)}
-                                </span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setEditingLeadData(selectedLead);
+                                        setIsEditingLead(!isEditingLead);
+                                    }}
+                                    className={`p-2 rounded-lg transition-colors ${isEditingLead ? 'bg-brand-50 text-brand-600' : 'hover:bg-slate-200 text-slate-500'}`}
+                                >
+                                    {isEditingLead ? <X size={18} /> : <Edit2 size={18} />}
+                                </button>
+                                <button
+                                    onClick={handleDeleteLead}
+                                    disabled={isDeletingLead}
+                                    className="p-2 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
                         </div>
 
@@ -500,61 +589,139 @@ const LeadsList = () => {
 
                         {/* Information Sections */}
                         <div className="space-y-6">
-                            <div>
-                                <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Informações Gerais</h5>
-                                <div className="space-y-4">
-                                    <div className="flex items-start">
-                                        <Mail size={18} className="text-slate-400 mt-0.5 mr-3" />
+                            {isEditingLead ? (
+                                <div className="bg-white p-5 rounded-xl border border-blue-100 space-y-4">
+                                    <h5 className="text-sm font-bold text-brand-600 flex items-center gap-2 mb-4">
+                                        <Edit2 size={16} /> Editar Dados
+                                    </h5>
+                                    <div className="space-y-3">
                                         <div>
-                                            <p className="text-xs text-slate-500 font-medium">Email</p>
-                                            <p className="text-sm text-slate-900 font-semibold">{selectedLead.email}</p>
+                                            <label className="text-xs font-semibold text-slate-500 block mb-1">Nome</label>
+                                            <input type="text" className="w-full text-sm p-2 border border-slate-200 rounded outline-none focus:border-brand-500" value={editingLeadData.name || ''} onChange={(e) => setEditingLeadData({ ...editingLeadData, name: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-slate-500 block mb-1">Email</label>
+                                            <input type="email" className="w-full text-sm p-2 border border-slate-200 rounded outline-none focus:border-brand-500" value={editingLeadData.email || ''} onChange={(e) => setEditingLeadData({ ...editingLeadData, email: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-slate-500 block mb-1">Telefone / WhatsApp</label>
+                                            <input type="text" className="w-full text-sm p-2 border border-slate-200 rounded outline-none focus:border-brand-500" value={editingLeadData.phone || ''} onChange={(e) => setEditingLeadData({ ...editingLeadData, phone: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-slate-500 block mb-1">Organização</label>
+                                            <input type="text" className="w-full text-sm p-2 border border-slate-200 rounded outline-none focus:border-brand-500" value={editingLeadData.organization_name || ''} onChange={(e) => setEditingLeadData({ ...editingLeadData, organization_name: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-slate-500 block mb-1">Cargo</label>
+                                            <input type="text" className="w-full text-sm p-2 border border-slate-200 rounded outline-none focus:border-brand-500" value={editingLeadData.role_title || ''} onChange={(e) => setEditingLeadData({ ...editingLeadData, role_title: e.target.value })} />
                                         </div>
                                     </div>
-                                    <div className="flex items-start">
-                                        <Building2 size={18} className="text-slate-400 mt-0.5 mr-3" />
-                                        <div>
-                                            <p className="text-xs text-slate-500 font-medium">Organização</p>
-                                            <p className="text-sm text-slate-900 font-semibold">{selectedLead.organization_name || '-'}</p>
-                                        </div>
+                                    <div className="pt-3">
+                                        <button
+                                            onClick={handleSaveEditLead}
+                                            disabled={isUpdatingLead}
+                                            className="w-full bg-brand-600 text-white rounded font-semibold py-2 flex items-center justify-center gap-2 hover:bg-brand-700 disabled:opacity-50"
+                                        >
+                                            <Check size={16} /> Salvar Alterações
+                                        </button>
                                     </div>
-                                    <div className="flex items-start">
-                                        <Tag size={18} className="text-slate-400 mt-0.5 mr-3" />
-                                        <div>
-                                            <p className="text-xs text-slate-500 font-medium">Origem do Lead</p>
-                                            <p className="text-sm text-slate-900">{selectedLead.source}</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Informações Gerais</h5>
+                                    <div className="space-y-4">
+                                        <div className="flex items-start">
+                                            <Mail size={18} className="text-slate-400 mt-0.5 mr-3" />
+                                            <div>
+                                                <p className="text-xs text-slate-500 font-medium">Email</p>
+                                                <p className="text-sm text-slate-900 font-semibold">{selectedLead.email}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-start">
-                                        <Calendar size={18} className="text-slate-400 mt-0.5 mr-3" />
-                                        <div>
-                                            <p className="text-xs text-slate-500 font-medium">Data de Cadastro</p>
-                                            <p className="text-sm text-slate-900">
-                                                {new Date(selectedLead.created_at).toLocaleDateString()}
-                                            </p>
+                                        <div className="flex items-start">
+                                            <Building2 size={18} className="text-slate-400 mt-0.5 mr-3" />
+                                            <div>
+                                                <p className="text-xs text-slate-500 font-medium">Organização</p>
+                                                <p className="text-sm text-slate-900 font-semibold">{selectedLead.organization_name || '-'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Tag size={18} className="text-slate-400 mt-0.5 mr-3" />
+                                            <div>
+                                                <p className="text-xs text-slate-500 font-medium">Origem do Lead</p>
+                                                <p className="text-sm text-slate-900">{selectedLead.source}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start">
+                                            <Calendar size={18} className="text-slate-400 mt-0.5 mr-3" />
+                                            <div>
+                                                <p className="text-xs text-slate-500 font-medium">Data de Cadastro</p>
+                                                <p className="text-sm text-slate-900">
+                                                    {new Date(selectedLead.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
                             <div>
                                 <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Histórico de Atividade</h5>
-                                <div className="py-4 text-center">
-                                    <p className="text-sm text-slate-400 italic">Nenhuma atividade registrada até o momento.</p>
-                                </div>
+                                {leadActivities.length === 0 ? (
+                                    <div className="py-4 text-center">
+                                        <p className="text-sm text-slate-400 italic">Nenhuma atividade registrada até o momento.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                                        {leadActivities.map((activity) => (
+                                            <div key={activity.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-100 group-[.is-active]:bg-brand-50 text-brand-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                                                    {activity.type === 'status_change' ? <Tag size={16} /> : <MessageSquare size={16} />}
+                                                </div>
+                                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-3 rounded border border-slate-200 shadow-sm">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <div className="text-xs font-semibold text-slate-700">{activity.description}</div>
+                                                        <time className="text-[10px] sm:text-xs text-slate-400">{new Date(activity.created_at).toLocaleDateString()}</time>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div>
                                 <h5 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Notas e Observações</h5>
                                 <div className="space-y-4">
-                                    <div className="py-2 text-center">
-                                        <p className="text-xs text-slate-400 italic">Nenhuma nota adicionada.</p>
-                                    </div>
+                                    {leadNotes.length === 0 ? (
+                                        <div className="py-2 text-center">
+                                            <p className="text-xs text-slate-400 italic">Nenhuma nota adicionada.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3 mb-6">
+                                            {leadNotes.map(note => (
+                                                <div key={note.id} className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-sm text-slate-700">
+                                                    <p>{note.content}</p>
+                                                    <p className="text-[10px] text-slate-400 mt-2 text-right">
+                                                        {new Date(note.created_at).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <textarea
                                         placeholder="Adicionar uma nova nota..."
                                         className="w-full p-3 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none h-24"
+                                        value={newNoteContent}
+                                        onChange={(e) => setNewNoteContent(e.target.value)}
+                                        disabled={isAddingNote}
                                     ></textarea>
-                                    <button className="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors">
-                                        Adicionar Nota
+                                    <button
+                                        className="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50"
+                                        onClick={handleAddNote}
+                                        disabled={isAddingNote || !newNoteContent.trim()}
+                                    >
+                                        {isAddingNote ? 'Adicionando...' : 'Adicionar Nota'}
                                     </button>
                                 </div>
                             </div>
