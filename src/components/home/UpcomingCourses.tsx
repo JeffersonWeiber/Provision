@@ -1,6 +1,7 @@
 import { Calendar, MapPin, ArrowRight } from 'lucide-react';
 import { useProducts } from '../../hooks/useProducts';
 import { Link } from 'react-router-dom';
+import { formatCourseDate } from '../../utils/masks';
 
 const UpcomingCourses = () => {
   const { data: courses = [], isLoading, error } = useProducts('published');
@@ -52,7 +53,7 @@ const UpcomingCourses = () => {
                 </div>
                 <div className="flex-1 p-6 flex flex-col">
                   <div className="flex items-center text-sm text-slate-500 mb-3 space-x-4">
-                    <span className="flex items-center"><Calendar size={16} className="mr-1.5 text-brand-500" /> {course.settings?.date || 'A definir'}</span>
+                    <span className="flex items-center"><Calendar size={16} className="mr-1.5 text-brand-500" /> {formatCourseDate(course.settings?.date)}</span>
                     <span className="flex items-center"><MapPin size={16} className="mr-1.5 text-brand-500" /> {course.settings?.city || 'Online / A definir'}</span>
                   </div>
                   <h4 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2 hover:text-brand-700 transition-colors">

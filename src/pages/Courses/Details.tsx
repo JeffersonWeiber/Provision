@@ -4,7 +4,7 @@ import { useProduct } from '../../hooks/useProducts';
 import { Calendar, MapPin, Clock, ArrowLeft, CheckCircle, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import Modal from '../../components/ui/Modal';
-import { maskPhone } from '../../utils/masks';
+import { maskPhone, formatCourseDate } from '../../utils/masks';
 
 const CourseDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -93,7 +93,7 @@ const CourseDetails = () => {
                     <h1 className="text-3xl md:text-5xl font-extrabold mb-6 max-w-4xl leading-tight">{course.title}</h1>
 
                     <div className="flex flex-wrap gap-6 text-sm md:text-base text-slate-300">
-                        <span className="flex items-center"><Calendar className="mr-2 text-brand-400" size={20} /> {course.settings?.date || 'A definir'}</span>
+                        <span className="flex items-center"><Calendar className="mr-2 text-brand-400" size={20} /> {formatCourseDate(course.settings?.date)}</span>
                         <span className="flex items-center"><Clock className="mr-2 text-brand-400" size={20} /> {course.settings?.time || 'A definir'}</span>
                         <span className="flex items-center"><MapPin className="mr-2 text-brand-400" size={20} /> {course.settings?.city || 'Online'}</span>
                     </div>

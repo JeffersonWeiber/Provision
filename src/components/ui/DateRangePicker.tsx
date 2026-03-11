@@ -58,14 +58,21 @@ export default function DateRangePicker({ value, onChange, placeholder = 'Seleci
             const s = new Date(parts[0] + 'T12:00:00');
             if (!isNaN(s.getTime())) {
                 setStartDate(s);
-                setCurrentMonth(new Date(s.getFullYear(), s.getMonth(), 1));
+                // Only change current month if it's currently showing a different month
+                // to avoid jarring the user if they're browsing the calendar
+                const sMonth = new Date(s.getFullYear(), s.getMonth(), 1);
+                if (currentMonth.getTime() !== sMonth.getTime()) {
+                    setCurrentMonth(sMonth);
+                }
             }
         }
         if (parts[1]) {
             const e = new Date(parts[1] + 'T12:00:00');
             if (!isNaN(e.getTime())) setEndDate(e);
+        } else {
+            setEndDate(null);
         }
-    }, []);
+    }, [value]);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -93,10 +100,13 @@ export default function DateRangePicker({ value, onChange, placeholder = 'Seleci
     }
 
     function handleDayClick(day: Date) {
+        const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
         if (selecting === 'start') {
             setStartDate(day);
             setEndDate(null);
             setSelecting('end');
+            onChange(fmt(day)); // Já salva como data única no primeiro clique
         } else {
             if (startDate && day < startDate) {
                 setEndDate(startDate);
@@ -110,7 +120,6 @@ export default function DateRangePicker({ value, onChange, placeholder = 'Seleci
             const s = startDate && day >= startDate ? startDate : day;
             const e = startDate && day >= startDate ? day : startDate;
 
-            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             if (s && e) {
                 if (isSameDay(s, e)) {
                     onChange(fmt(s));
