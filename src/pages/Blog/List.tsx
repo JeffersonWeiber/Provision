@@ -6,7 +6,8 @@ import { Link } from 'react-router-dom';
 import { Search, User, ArrowRight } from 'lucide-react';
 
 const BlogList = () => {
-    const { data: articles = [], isLoading } = useArticles();
+    const { data: allArticles = [], isLoading } = useArticles();
+    const articles = allArticles.filter((a) => a.status === 'published');
     const [filter, setFilter] = useState('Todos');
 
     const categories = ['Todos', ...Array.from(new Set(articles.map(a => a.category)))];

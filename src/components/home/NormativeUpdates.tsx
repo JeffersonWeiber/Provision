@@ -3,7 +3,8 @@ import { useArticles } from '../../hooks/useArticles';
 import { ArrowRight, BookOpen } from 'lucide-react';
 
 const NormativeUpdates = () => {
-    const { data: articles = [], isLoading } = useArticles();
+    const { data: allArticles = [], isLoading } = useArticles();
+    const articles = allArticles.filter((a) => a.status === 'published');
 
     if (isLoading) {
         return (
