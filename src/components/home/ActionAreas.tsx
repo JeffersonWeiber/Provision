@@ -19,10 +19,10 @@ const ActionAreas = () => {
     },
   ];
 
-  const expertise = [
-    { title: 'Planejamento Governamental', areas: 'PPA, LDO, LOA' },
-    { title: 'Orçamento Público', areas: 'Execução e Fiscalização' },
-    { title: 'Apoio Técnico', areas: 'Acompanhamento e Gestão' },
+    const expertise = [
+        { title: 'Planejamento Governamental', areas: 'PEM, PPA, LDO, LOA' },
+        { title: 'Orçamento Público', areas: 'Execução e Fiscalização' },
+        { title: 'Apoio Técnico', areas: 'Acompanhamento e Gestão' },
     { title: 'Capacitação', areas: 'Gestores e Equipes' },
   ];
 

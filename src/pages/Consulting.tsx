@@ -11,6 +11,7 @@ const Consulting = () => {
             image: '/assets/images/assessoria.png',
             desc: 'Suporte estratégico e operacional para administrações municipais, câmaras e equipes técnicas.',
             details: [
+                'Plano Estratégico Municipal (PEM)',
                 'Assessoria técnica especializada em planejamento e orçamento',
                 'Elaboração e acompanhamento de instrumentos fundamentais (PPA, LDO, LOA)',
                 'Suporte na tomada de decisões estratégicas',
