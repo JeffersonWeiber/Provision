@@ -1,4 +1,4 @@
-import { Phone, Mail, Instagram, Linkedin, Facebook, Youtube } from 'lucide-react';
+import { Phone, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Logo from '../../assets/logo-provision.svg';
 import { useSettings } from '../../hooks/useSettings';
@@ -19,12 +19,6 @@ const Footer = () => {
             ? `(${contactPhone.slice(0, 2)}) ${contactPhone.slice(2, 6)}-${contactPhone.slice(6)}`
             : contactPhone;
 
-    const socialLinks = [
-        { icon: Instagram, url: settings?.instagram_url || 'https://instagram.com/provision', label: 'Instagram' },
-        { icon: Facebook, url: settings?.facebook_url || 'https://facebook.com/provision', label: 'Facebook' },
-        { icon: Linkedin, url: settings?.linkedin_url || 'https://linkedin.com/company/provision', label: 'LinkedIn' },
-        { icon: Youtube, url: settings?.youtube_url || 'https://youtube.com/provision', label: 'YouTube' }
-    ];
 
     const handleNewsletterSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,20 +53,6 @@ const Footer = () => {
                         <p className="text-sm leading-relaxed mb-4">
                             {settings?.site_description || 'Soluções técnicas especializadas para uma gestão pública segura, eficiente e transparente.'}
                         </p>
-                        <div className="flex space-x-4">
-                            {socialLinks.map((social, index) => (
-                                <a
-                                    key={index}
-                                    href={social.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:text-white transition-colors"
-                                    title={social.label}
-                                >
-                                    <social.icon size={20} />
-                                </a>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Quick Links */}

@@ -2,7 +2,7 @@
 
 const clientLogos = [
     { name: "Pato Bragado", file: " Pato Bragado - Pr.png", invertInLightMode: false },
-    { name: "Câmara Municipal de Boa Esperança do Iguaçu", file: "Câmara Municipal de Boa Esperança do Iguaçu - PR.png", invertInLightMode: false },
+    { name: "Câmara Municipal de Boa Esperança do Iguaçu", file: "camara boa .png", invertInLightMode: false },
     { name: "Câmara Municipal de Céu Azul", file: "Câmara Municipal de Céu Azul - PR.png", invertInLightMode: false },
     { name: "Câmara Municipal de Terra Boa", file: "Câmara Municipal de Terra Boa - PR.png", invertInLightMode: false },
     { name: "Câmara Municipal de Terra Roxa", file: "Câmara Municipal de Terra Roxa - PR.png", invertInLightMode: false },
