@@ -18,11 +18,24 @@ const BlogDetail = () => {
             .replace(/\\n/g, '\n')
             .replace(/\\t/g, '\t');
 
-        // Ensure that paragraphs have proper separation by forcing double newlines
-        const formatted = unescaped
-            .split('\n')
-            .filter(line => line.trim() !== '')
-            .join('\n\n');
+        // Handle paragraph spacing smartly without spacing out Markdown lists
+        const lines = unescaped.split('\n').map(line => line.trim()).filter(Boolean);
+        let formatted = '';
+        for (let i = 0; i < lines.length; i++) {
+            formatted += lines[i];
+            if (i < lines.length - 1) {
+                // Check if current or next line is a list item or blockquote
+                const isListItem = (str: string) => /^[-*>]\s|^\d+\.\s/.test(str);
+                const currentIsList = isListItem(lines[i]);
+                const nextIsList = isListItem(lines[i + 1]);
+                
+                if (currentIsList && nextIsList) {
+                    formatted += '\n'; // Keep tight spacing between consecutive list items
+                } else {
+                    formatted += '\n\n'; // Add full paragraph spacing otherwise
+                }
+            }
+        }
 
         return marked.parse(formatted, { breaks: true }) as string;
     }, [articleContent]);
