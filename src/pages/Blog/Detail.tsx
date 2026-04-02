@@ -11,14 +11,20 @@ const BlogDetail = () => {
     const [imgError, setImgError] = useState(false);
 
     const articleContent = article?.content;
-    // Parse markdown content to HTML (also handle stored \\n literal strings)
     const parsedContent = useMemo(() => {
         if (!articleContent) return null;
         // Unescape literal \n sequences stored as strings in the DB
         const unescaped = articleContent
             .replace(/\\n/g, '\n')
             .replace(/\\t/g, '\t');
-        return marked.parse(unescaped, { breaks: true }) as string;
+
+        // Ensure that paragraphs have proper separation by forcing double newlines
+        const formatted = unescaped
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .join('\n\n');
+
+        return marked.parse(formatted, { breaks: true }) as string;
     }, [articleContent]);
 
     if (isLoading) {
@@ -80,16 +86,17 @@ const BlogDetail = () => {
                     {parsedContent ? (
                         <div
                             dangerouslySetInnerHTML={{ __html: parsedContent }}
-                            className="prose prose-slate prose-lg max-w-none
-                                       prose-headings:font-bold prose-headings:text-slate-900
-                                       prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
-                                       prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-                                       prose-p:leading-relaxed prose-p:text-slate-700
-                                       prose-strong:text-slate-900 prose-strong:font-bold
-                                       prose-ul:list-disc prose-ul:pl-6
-                                       prose-ol:list-decimal prose-ol:pl-6
-                                       prose-li:text-slate-700 prose-li:mb-1
-                                       prose-blockquote:border-l-4 prose-blockquote:border-brand-500 prose-blockquote:pl-4 prose-blockquote:italic"
+                            className="text-lg text-slate-700 max-w-none
+                                       [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h1]:mb-6
+                                       [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 [&_h2]:mt-8 [&_h2]:mb-4
+                                       [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-slate-900 [&_h3]:mt-6 [&_h3]:mb-3
+                                       [&_p]:leading-relaxed [&_p]:text-slate-700 [&_p]:mb-6
+                                       [&_strong]:text-slate-900 [&_strong]:font-bold
+                                       [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6
+                                       [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-6
+                                       [&_li]:mb-2
+                                       [&_blockquote]:border-l-4 [&_blockquote]:border-brand-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:mb-6
+                                       [&_a]:text-brand-600 [&_a]:underline"
                         />
                     ) : (
                         <p className="text-slate-600">
