@@ -43,9 +43,9 @@ const Login = () => {
             console.error('Login error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login. Verifique suas credenciais.';
             setError(errorMessage);
-        } finally {
             setIsLoading(false);
         }
+
     };
 
     return (
